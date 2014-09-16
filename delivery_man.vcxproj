@@ -39,8 +39,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\Uppsala\Courses\Period4\AI\03.Tasks\Lab1\delivery_man\delivery_man\debug;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Uppsala\Courses\Period4\AI\03.Tasks\Lab1\delivery_man\delivery_man\debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>debug;$(IncludePath)</IncludePath>
+    <LibraryPath>debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

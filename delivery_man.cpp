@@ -2,15 +2,9 @@
 //
 
 #include "stdafx.h"
-#include "DeliveryManClient.h"
-#pragma comment (lib,"DeliveryManClient")
+#include "common.h"
 
 using namespace std;
-
-typedef vector<vector<wstring>> GameNodes;
-typedef vector<vector<int>> GameEdges;
-typedef vector<VanInfo> VanList;
-typedef vector<DeliveryInfo> DeliveryList;
 
 struct GameInfo{
 	int time;
