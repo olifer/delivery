@@ -2,6 +2,12 @@ Delivery
 ========
 C++ implementation of the A* algorithm for the AI course (Autumn 2014) at Uppsala University.
 
+Setup
+-----
+1. Clone repository.
+2. Follow instructions given in "Step by Step Instructions for DM.pdf" in the repo directory. 
+And then it *should* be okay.
+
 Structure
 ---------
 * *Node*: Represents a node of the graph. 
