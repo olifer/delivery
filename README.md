@@ -4,13 +4,13 @@ C++ implementation of the A* algorithm for the AI course (Autumn 2014) at Uppsal
 
 Structure
 ---------
-*Node*: Represents a node of the graph. 
-*Edge*: Represents an edge of the graph. 
-*GameNodes*: List of nodes.
-*GameEdgesCosts*: Costs of all edges. (integers)
-*VanList*: List of vans.
-*DeliveryList*: List of deliveries (and their info).
-*GameGraph*: List of nodes and costs. 
+* *Node*: Represents a node of the graph. 
+* *Edge*: Represents an edge of the graph. 
+* *GameNodes*: List of nodes.
+* *GameEdgesCosts*: Costs of all edges. (integers)
+* *VanList*: List of vans.
+* *DeliveryList*: List of deliveries (and their info).
+* *GameGraph*: List of nodes and costs. 
 
 Tips
 ----
