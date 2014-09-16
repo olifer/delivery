@@ -1,14 +1,13 @@
 // delivery_man.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
 #include "common.h"
 
 using namespace std;
 
 struct GameInfo{
 	int time;
-	GameEdges edges;
+	GameEdgesCosts edges;
 	VanList vans;
 	DeliveryList waitingDeliveries;
 	DeliveryList activeDeliveries;
