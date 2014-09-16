@@ -1,4 +1,7 @@
+#ifndef COMMON_H
+#define COMMON_H
 #include "common.h"
+#endif
 
 class Edge {
 	Node _node1, _node2;

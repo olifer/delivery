@@ -1,3 +1,5 @@
+#define EDGE_H
+
 #include "edge.h"
 
 Edge::Edge(Node node1, Node node2, int cost, Location location) {
