@@ -14,8 +14,10 @@ Structure
 
 Tips
 ----
-Use `#include <algorithm>`. 
+Use `#include <algorithm>` . 
 This library contains several useful functions such as `find`, `foreach`,`mix/max_element` and more.
+See [here](http://www.cplusplus.com/reference/algorithm/).
 
 Side note: It might be possible to use `functional` (from stdlib) to pass the heuristic
 function as a parameter of the algorithm. 
+See [here](http://www.cplusplus.com/reference/functional/).
