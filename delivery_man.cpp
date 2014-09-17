@@ -10,6 +10,7 @@ int main(int argc, _TCHAR* argv[])
 {
 	wstring group(L"3");
 	bool status;
+	// DM_Client from DLL (closed source).
 	DM_Client client = DM_Client(group, status);
 
 	GameEnv gameEnv(&client);
@@ -17,9 +18,19 @@ int main(int argc, _TCHAR* argv[])
 
 	gameEnv.spreadOut();
 
-	for(int i=0;i<100;i++){
+	//for(int i=0;i<100;i++){
+	while(!gameEnv.isTimeElapsed()) {
 		// dummy loop
+		// 1) Assign a delivery to each van.
+		// 2) Compute shortest path for each van to it's assigned target point.
+		// 3) Send instructions with path
+		// 4) Update time. (eventually sleep, because the game state might not advance). 
+		// 5) Check for accidents and do stuff.
+		gameEnv.assignDeliveries(); // Check for new deliveries and assign van.
+		gameEnv.computeInstructions(); // Compute shortest paths to either 
+		// gameEnv.sendInstructions(Instructions);
 		gameEnv.updateGameInfo();
+		gameEnv.checkForAccidents();
 	}
 
 	return 0;

@@ -16,7 +16,7 @@ Structure
 * *GameEdgesCosts*: Costs of all edges. (integers)
 * *VanList*: List of vans.
 * *DeliveryList*: List of deliveries (and their info).
-* *GameGraph*: List of nodes and costs. 
+* *GameEnv*: List of nodes and costs. 
 
 Tips
 ----

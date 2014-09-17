@@ -60,7 +60,11 @@ vector<Edge> GameEnv::getEdges(Node fromNode){
 	Node nextNode;
 	Location loc;
 	int cost;
-
+	// Let <y,x> be the node coordinate:
+	// Edge below: <2 y + 1,x>
+	//		above: <2 y - 1,x>
+	//		left:  <2 y, x - 1>
+	//		right: <2 y, x>
 	if(fromNode.second > 0){ // check node above fromNode
 		nextNode = make_pair(fromNode.first+1,fromNode.second);
 		loc = make_pair(2*fromNode.first-1, fromNode.second);
@@ -74,4 +78,5 @@ vector<Edge> GameEnv::getEdges(Node fromNode){
 /*----------------------------Clean-up---------------------------------------*/
 
 GameEnv::~GameEnv(){
+
 }

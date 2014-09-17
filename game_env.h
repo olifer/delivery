@@ -17,9 +17,12 @@ public:
 	GameEnv(DM_Client *client);
 	~GameEnv(void);
 	std::vector<Edge> getEdges(Node fromNode);
+	bool isTimeElapsed () { return (_gameInfo.time > 1440); }
 	void spreadOut(void);
 	void updateGameInfo(void);
 	void startGame(void);
 	void sendInstructions(InstructionsSet instuctions);
-	
+	void assignDeliveries(void /*probably something here*/); // assign a delivery to vans.
+	void computeInstructions(void /*same thing here*/); // A* algorithm 
+	void checkForAccidents(void);
 }; 

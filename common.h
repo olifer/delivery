@@ -20,5 +20,5 @@ struct GameInfo{
 	DeliveryList waitingDeliveries;
 	DeliveryList activeDeliveries;
 	std::vector<std::pair<int,int>> completedDeliveries;
-	std::wstring output;
+	std::wstring output; // a response.
 }; 
