@@ -12,7 +12,7 @@ Structure
 ---------
 * *Node*: Represents a node of the graph. 
 * *Edge*: Represents an edge of the graph. 
-* *GameNodes*: List of nodes.
+* *GameNodesTypes*: List of nodes.
 * *GameEdgesCosts*: Costs of all edges. (integers)
 * *VanList*: List of vans.
 * *DeliveryList*: List of deliveries (and their info).

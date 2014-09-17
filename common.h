@@ -14,7 +14,7 @@
 // Game node represented by its location <Y,X>
 typedef Location Node;	
 // 2D array representing types of game nodes
-typedef std::vector<std::vector<std::wstring>> TypesOfNodes;
+typedef std::vector<std::vector<std::wstring>> GameNodesTypes;
 // 2D array representing costs of game edges 
 typedef std::vector<std::vector<int>> GameEdgesCosts;
 // Array of vans entries

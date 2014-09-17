@@ -12,7 +12,7 @@ GameEnv::GameEnv(DM_Client *client){
 */
 void GameEnv::startGame(void){
 	wstring output;
-	_client->startGame(_typesOfNodes, output);
+	_client->startGame(_gameNodesTypes, output);
 }
 /* 
 *	Send instructions to the vans.

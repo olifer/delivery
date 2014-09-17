@@ -7,7 +7,7 @@
 class GameEnv {
     static const int _spread_out_distance = 10;
 	DM_Client *_client;
-	TypesOfNodes _typesOfNodes;
+	GameNodesTypes _gameNodesTypes;
 	GameInfo _gameInfo;
 public:
 	GameEnv(DM_Client *client);
