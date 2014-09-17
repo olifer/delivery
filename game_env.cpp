@@ -1,12 +1,11 @@
 #include "game_env.h"
-
+#include <algorithm>    // std::find
 using namespace std;
 
 /*----------------------------Constructors-----------------------------------*/
 GameEnv::GameEnv(DM_Client *client){
 	_client = client;
 }
-
 /*----------------------------Interfaces-------------------------------------*/
 /* 
 *	Should be run first.
@@ -26,7 +25,7 @@ void GameEnv::sendInstructions(InstructionsSet sendInstructions){
 *	Update game information. //ASK: How frequently?
 */
 void GameEnv::updateGameInfo(void){
-	_gameInfo.vans.clear();
+	clearGameInfo();
 	_client->getInformation(_gameInfo.time, _gameInfo.edges, _gameInfo.vans, _gameInfo.waitingDeliveries,
 			_gameInfo.activeDeliveries, _gameInfo.completedDeliveries, _gameInfo.output);
 }
@@ -97,6 +96,42 @@ vector<Edge> GameEnv::getOutgoingEdges(Node fromNode){
 	return edges;
 }
 
+void GameEnv::assignDeliveries(void){
+	updateGameInfo();
+	if(!_gameInfo.waitingDeliveries.empty()){
+		int van_num ; // we have delivery!
+		if( van_num = getFreeVanNumber() != -1 ){
+			// we have a free van, time to pick-up delivery!
+		}
+	}
+}
+
+/* Return Free Van*/
+int GameEnv::getFreeVanNumber(void) {
+	
+	/*auto pred = [](const VanInfo &van) {
+		return van.instructions.empty() && van.cargo == -1;
+	};
+
+	VanList::iterator free_vans = 
+		find_if(_gameInfo.vans.begin(), _gameInfo.vans.end(), pred);
+
+	return *free_vans;*/
+	/* temporal */
+	if(_gameInfo.vans[0].instructions.empty() && _gameInfo.vans[0].cargo == -1){
+		return 0;
+	} else {
+		return -1;
+	}
+}
+/*-------------------------Private Interfaces--------------------------------*/
+void GameEnv::clearGameInfo(void){
+	_gameInfo.vans.clear();
+	_gameInfo.edges.clear();
+	_gameInfo.waitingDeliveries.clear();
+	_gameInfo.activeDeliveries.clear();
+	_gameInfo.completedDeliveries.clear();
+}
 /*----------------------------Clean-up---------------------------------------*/
 
 GameEnv::~GameEnv(){

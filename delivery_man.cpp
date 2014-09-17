@@ -2,7 +2,7 @@
 //
 
 #include "game_env.h"
-
+ #include <Windows.h>
 using namespace std;
 
 
@@ -15,16 +15,20 @@ int main(int argc, _TCHAR* argv[])
 
 	GameEnv gameEnv(&client);
 	gameEnv.startGame();
+	// start timer
+	time_t start = time(NULL);
 
 	gameEnv.spreadOut();
 
-	vector<Edge> edges;
+	/*vector<Edge> edges;
 	edges.reserve(4);    
 	edges = gameEnv.getOutgoingEdges(make_pair(20,20));
 	edges = gameEnv.getOutgoingEdges(make_pair(0,0));
-	edges = gameEnv.getOutgoingEdges(make_pair(40,40));
+	edges = gameEnv.getOutgoingEdges(make_pair(40,40));*/
 	//for(int i=0;i<100;i++){
 	while(!gameEnv.isTimeElapsed()) {
+		gameEnv.assignDeliveries();
+		//gameEnv.updateGameInfo();
 		// dummy loop
 		// 1) Assign a delivery to each van.
 		// 2) Compute shortest path for each van to it's assigned target point.
@@ -34,7 +38,7 @@ int main(int argc, _TCHAR* argv[])
 		//gameEnv.assignDeliveries(); // Check for new deliveries and assign van.
 		//gameEnv.computeInstructions(); // Compute shortest paths to either 
 		// gameEnv.sendInstructions(Instructions);
-		gameEnv.updateGameInfo();
+		
 		//gameEnv.checkForAccidents();
 	}
 

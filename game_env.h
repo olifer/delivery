@@ -21,5 +21,9 @@ public:
 	void assignDeliveries(void /*probably something here*/); // assign a delivery to vans.
 	void computeInstructions(void /*same thing here*/); // A* algorithm 
 	void checkForAccidents(void);
-}; 
+private:
+	void clearGameInfo(void); 
+	int getFreeVanNumber(void); 
+};
+
 #endif

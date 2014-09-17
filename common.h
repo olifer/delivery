@@ -8,6 +8,8 @@
 
 #define G_MATRIX_WIDTH 40	// width of the game matrix
 #define G_MATRIX_LENGTH 40	// length of the game matrix
+// apprx. update interval of the traffic conditions
+#define G_UPDATE_INTERVAL 100	
 
 // Game node represented by its location <Y,X>
 typedef Location Node;	
