@@ -1,22 +1,18 @@
-#ifndef COMMON_H
-#define COMMON_H
-#include "common.h"
-#endif
+#ifndef GAME_ENV_H
+#define GAME_ENV_H
 
-#ifndef EDGE_H
-#define EDGE_H
+#include "common.h"
 #include "edge.h"
-#endif
 
 class GameEnv {
     static const int _spread_out_distance = 10;
 	DM_Client *_client;
-	GameNodes _gameNodes;
+	TypesOfNodes _typesOfNodes;
 	GameInfo _gameInfo;
 public:
 	GameEnv(DM_Client *client);
 	~GameEnv(void);
-	std::vector<Edge> getEdges(Node fromNode);
+	std::vector<Edge> getOutgoingEdges(Node fromNode);
 	bool isTimeElapsed () { return (_gameInfo.time > 1440); }
 	void spreadOut(void);
 	void updateGameInfo(void);
@@ -26,3 +22,4 @@ public:
 	void computeInstructions(void /*same thing here*/); // A* algorithm 
 	void checkForAccidents(void);
 }; 
+#endif

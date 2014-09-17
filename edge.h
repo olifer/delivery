@@ -1,7 +1,7 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef EDGE_H
+#define EDGE_H
+
 #include "common.h"
-#endif
 
 class Edge {
 	Node _node1, _node2;
@@ -14,3 +14,4 @@ public:
 	~Edge(void);
 };
 
+#endif

@@ -18,6 +18,11 @@ int main(int argc, _TCHAR* argv[])
 
 	gameEnv.spreadOut();
 
+	vector<Edge> edges;
+	edges.reserve(4);    
+	edges = gameEnv.getOutgoingEdges(make_pair(20,20));
+	edges = gameEnv.getOutgoingEdges(make_pair(0,0));
+	edges = gameEnv.getOutgoingEdges(make_pair(40,40));
 	//for(int i=0;i<100;i++){
 	while(!gameEnv.isTimeElapsed()) {
 		// dummy loop
@@ -26,11 +31,11 @@ int main(int argc, _TCHAR* argv[])
 		// 3) Send instructions with path
 		// 4) Update time. (eventually sleep, because the game state might not advance). 
 		// 5) Check for accidents and do stuff.
-		gameEnv.assignDeliveries(); // Check for new deliveries and assign van.
-		gameEnv.computeInstructions(); // Compute shortest paths to either 
+		//gameEnv.assignDeliveries(); // Check for new deliveries and assign van.
+		//gameEnv.computeInstructions(); // Compute shortest paths to either 
 		// gameEnv.sendInstructions(Instructions);
 		gameEnv.updateGameInfo();
-		gameEnv.checkForAccidents();
+		//gameEnv.checkForAccidents();
 	}
 
 	return 0;
