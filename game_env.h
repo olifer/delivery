@@ -32,6 +32,11 @@ public:
 	void assignDeliveries(void /*probably something here*/); // assign a delivery to vans.
 	void computeInstructions(void /*same thing here*/); // A* algorithm 
 	void checkForAccidents(void);
+	unsigned  __int8 euclideanDistance(Node node1, Node node2);
+	unsigned  __int8 euclideanDistanceFast(Node node1, Node node2);
+	unsigned  __int8 manhattanDistance(Node node1, Node node2);
+	bool checkPath(Node start, Node end,
+		unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2));
 private:
 	void clearGameInfo(void); 
 	int getFreeVanNumber(void); 
@@ -41,11 +46,8 @@ private:
 	void GameEnv::removeTaskByVan(__int8 vanNum);
 	void GameEnv::removeTask(__int8 deliveryNum, __int8 vanNum);
 	std::vector<Edge> getOutgoingEdges(Node fromNode);
-	Path findRoad(Node start, Node end, GameNodesTypes* nodes,
-	unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2));
-	unsigned  __int8 euclideanDistance(Node node1, Node node2);
-	unsigned  __int8 euclideanDistanceFast(Node node1, Node node2);
-	unsigned  __int8 manhattanDistance(Node node1, Node node2);
+	Path findRoad(Node start, Node end,
+		unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2));
 };
 
 #endif

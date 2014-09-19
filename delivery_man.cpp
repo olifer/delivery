@@ -26,6 +26,8 @@ int main(int argc, _TCHAR* argv[])
 	edges = gameEnv.getOutgoingEdges(make_pair(0,0));
 	edges = gameEnv.getOutgoingEdges(make_pair(40,40));*/
 	//for(int i=0;i<100;i++){
+	bool isCorrect = gameEnv.checkPath(make_pair(0,0),make_pair(20,20), &GameEnv::euclideanDistance);
+
 	while(!gameEnv.isTimeElapsed()) {
 		gameEnv.assignDeliveries();
 		//gameEnv.updateGameInfo();

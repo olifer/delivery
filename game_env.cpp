@@ -65,7 +65,7 @@ void GameEnv::assignDeliveries(void){
 			if( (vanNum = getFreeVanNumber()) != -1 ){
 				// we have a free van, time to pick-up delivery!
 				Path road = findRoad(_gameInfo.vans[vanNum].location, 
-					delivery.pickUp,&_gameNodesTypes, &GameEnv::euclideanDistanceFast); 
+					delivery.pickUp, &GameEnv::euclideanDistanceFast); 
 			}
 		}
 	}
@@ -160,7 +160,7 @@ vector<Edge> GameEnv::getOutgoingEdges(Node fromNode){
 	return edges;
 }
 
-Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes, 
+Path GameEnv::findRoad(Node start, Node goal, 
 	unsigned  __int8 (GameEnv::*heuristic)(Node, Node)){
 		vector<Edge> edges;
 		edges.reserve(4);
@@ -203,14 +203,14 @@ Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes,
 			edges.empty();
 			edges = getOutgoingEdges(entry.node);
 
-			for(size_t i=0; i < edges.size(); i++){
-				next = edges[i].getNextNode(entry.node);
+			for(vector<Edge>::iterator e = edges.begin(); e != edges.end(); e++){
+				next = e->getNextNode(entry.node);
 
 				if(!visited.count(next)){ // unvisited node
 					NodeEntry newEntry = NodeEntry();
-					newEntry.edge = edges[i].getLocation();
+					newEntry.edge = e->getLocation();
 					newEntry.node = next;
-					newEntry.computedCost = entry.computedCost + edges[i].getCost();
+					newEntry.computedCost = entry.computedCost + e->getCost();
 					newEntry.expectedTotalCost = newEntry.computedCost + (this->*heuristic)(newEntry.node, goal);
 					// place to visited set
 					visited[newEntry.node] = newEntry; //newEntry.edge.first == entry.edge.first && newEntry.edge.second == entry.edge.second
@@ -218,8 +218,8 @@ Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes,
 					open.push(newEntry);
 					// keep track of road
 					road[newEntry.edge] = entry.edge;
-				} else { // visited node, does not matter if it in either closed or open set
-					int g = entry.computedCost + edges[i].getCost();
+				} else { // visited node, does not matter if it either closed or open set
+					int g = entry.computedCost + e->getCost();
 					// check if we can improve the cost
 					if(visited[next].computedCost > g){
 						// no need to calculate the heuristic function again, since it 
@@ -229,7 +229,7 @@ Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes,
 						visited[next].computedCost = g;
 						
 						// update road
-						visited[next].edge = edges[i].getLocation();
+						visited[next].edge = e->getLocation();
 
 						// place again to the open set. 
 						// note: the same node could be located twice in the open set, but
@@ -251,6 +251,36 @@ Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes,
 		}
 
 		return pathToGoal;
+}
+
+bool GameEnv::checkPath(Node start, Node end, 
+	unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2)) {
+		bool isCorrect = true;
+		// Get the path.
+		Path path = findRoad(start, end, heuristic);
+
+		for(Path::iterator edge = path.begin(); edge != path.end(); ++edge) {
+			Path::iterator next = edge + 1; // get location of next edge in the matrix.
+			if(next == path.end()) {//If it is the last edge of the path, need to check it reaches the end.
+				vector<Edge> edgesFromEnd = getOutgoingEdges(end); // get edges from the end.
+				bool reachesEnd = false;
+				for(vector<Edge>::iterator e = edgesFromEnd.begin(); e != edgesFromEnd.end(); ++e) {
+					// Check that one of those edges have same location as the last edge of the path
+					// (i.e. that the path actually reaches the goal)
+					reachesEnd |= ((e->getLocation().first == edge->first) & (e->getLocation().second == edge->second));
+				}
+				return isCorrect & reachesEnd;
+			} 
+			// Check location of edges: it should only move by 1 unit in X OR in Y (not both).
+			int Y, nextY, X, nextX;
+			Y = edge->first;
+			nextY = next->first;
+			X = edge->second;
+			nextX = next->second;
+			isCorrect &= (abs(Y - nextY) + (abs(X - nextX))) == 1; // 
+		}
+		// if I'm here something went wrong.
+		return false;
 }
 
 /* Calculate idean distance between two nodes */
