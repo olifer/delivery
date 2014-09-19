@@ -1,6 +1,5 @@
 #include "game_env.h"
 #include "pqueue.h"
-#include <unordered_map>
 #include <algorithm>    // std::find
 using namespace std;
 
@@ -54,15 +53,33 @@ void GameEnv::spreadOut(void){
 
 void GameEnv::assignDeliveries(void){
 	updateGameInfo();
-	findRoad(make_pair(20,20),make_pair(20,20),&_gameNodesTypes, &GameEnv::euclideanDistance);
+	//findRoad(make_pair(20,20),make_pair(20,20),&_gameNodesTypes, &GameEnv::euclideanDistance);
+	/*Path road = findRoad(make_pair(10,20), 
+				make_pair(30,40),&_gameNodesTypes, &GameEnv::euclideanDistanceFast); */
 	if(!_gameInfo.waitingDeliveries.empty()){
-		int van_num ; // we have delivery!
-		if( van_num = getFreeVanNumber() != -1 ){
-			// we have a free van, time to pick-up delivery!
-		}
+		int i=0;
+		//while(!_activeTasks.deliveries[i].count()){
+			DeliveryInfo delivery = _gameInfo.waitingDeliveries[0];
+			//if(_activeCargoFreeVans[]
+			int van_num ; // we have delivery!
+			if( van_num = getFreeVanNumber() != -1 ){
+				// we have a free van, time to pick-up delivery!
+			
+				Path road = findRoad(_gameInfo.vans[van_num].location, 
+					delivery.pickUp,&_gameNodesTypes, &GameEnv::euclideanDistanceFast); 
+			}
+		//}
 	}
 }
 
+__int8 GameEnv::getAvailableDelivery(void){
+	for(size_t i=0; i<_gameInfo.waitingDeliveries.size(); i++){
+		//if(_activeTasks.deliveries[_gameInfo.waitingDeliveries[i].Number].count()){
+		//}
+	}
+
+	return -1;
+}
 /* Return Free Van*/
 int GameEnv::getFreeVanNumber(void) {
 	
@@ -127,27 +144,97 @@ vector<Edge> GameEnv::getOutgoingEdges(Node fromNode){
 	return edges;
 }
 
-NodeEntry GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes, 
+Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes, 
 	unsigned  __int8 (GameEnv::*heuristic)(Node, Node)){
-		//(this->*heuristic)();
-		vector<Node> path;
 		vector<Edge> edges;
 		edges.reserve(4);
 
-		unordered_map<Node, int, hash_pair> closedSet;
+		// road is formed by child->parent relation between edges
+		unordered_map<Node, Node, hash_pair> road;
+		// visited set = closed set + open set
+		unordered_map<Node, NodeEntry, hash_pair> visited;
 		// frontier
-		priority_queue<NodeEntry, NodeEntryList, greater<NodeEntry>> openSet; 
+		priority_queue<NodeEntry, NodeEntryList, greater<NodeEntry>> open; 
+		//priority_queue<NodeEntry, NodeEntryList, greater<NodeEntry>> openSet; 
+
 
 		// Initialization
-		Node next;
-		NodeEntry current, nextNodeEntry;
+		Node current, next;
+		NodeEntry entry;
 		
-		current.computedCost = 0;
-		current.expectedTotalCost = 10;
-		current.node = start;
-		
-		// dummy 
-		return current;
+		entry.computedCost = 0;
+		entry.expectedTotalCost = (this->*heuristic)(start, goal);
+		entry.node = start;
+		entry.edge = Location(-1,-1);
+
+		road[entry.edge] = Location(-1,-1);
+		visited[entry.node] = entry;
+
+		open.push(entry);
+
+		// Heart of A*
+		while(!open.empty()){
+			// Pick the cheapest node in open set
+			entry = open.top();
+			open.pop(); 
+
+			// Goal check
+			if(entry.node == goal) { 
+				break;
+			}
+
+			// Get possible edges
+			edges.empty();
+			edges = getOutgoingEdges(entry.node);
+
+			for(size_t i=0; i < edges.size(); i++){
+				next = edges[i].getNextNode(entry.node);
+
+				if(!visited.count(next)){ // unvisited node
+					NodeEntry newEntry = NodeEntry();
+					newEntry.edge = edges[i].getLocation();
+					newEntry.node = next;
+					newEntry.computedCost = entry.computedCost + edges[i].getCost();
+					newEntry.expectedTotalCost = newEntry.computedCost + (this->*heuristic)(newEntry.node, goal);
+					// place to visited set
+					visited[newEntry.node] = newEntry; //newEntry.edge.first == entry.edge.first && newEntry.edge.second == entry.edge.second
+					// place to frontier
+					open.push(newEntry);
+					// keep track of road
+					road[newEntry.edge] = entry.edge;
+				} else { // visited node, does not matter if it either closed or open set
+					int g = entry.computedCost + edges[i].getCost();
+					// check if we can improve the cost
+					if(visited[next].computedCost > g){
+						// no need to calculate the heuristic function again, since it 
+						// remains the same for the specific node
+						visited[next].expectedTotalCost = g + 
+							(visited[next].expectedTotalCost - visited[next].computedCost);
+						visited[next].computedCost = g;
+						
+						// update road
+						visited[next].edge = edges[i].getLocation();
+
+						// place again to the open set. 
+						// note: the same node could be located twice in the open set, but
+						// still the smallest one will be chose. thereby, we avoid 
+						// a searching operation across the open set.
+						open.push(visited[next]);
+					}
+				}
+			}
+		}
+
+		Path pathToGoal;
+		pathToGoal.reserve(1600);
+		Location currentEdge = entry.edge; 
+		// Make path
+		while(currentEdge.first>=0){
+			pathToGoal.push_back(currentEdge);
+			currentEdge = road[currentEdge];
+		}
+
+		return pathToGoal;
 }
 
 /* Calculate idean distance between two nodes */

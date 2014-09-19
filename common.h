@@ -12,6 +12,7 @@
 #define G_MATRIX_LENGTH 40	// length of the game matrix
 // apprx. update interval of the traffic conditions
 #define G_UPDATE_INTERVAL 100	
+#define N_VANS 5	
 
 // Game node represented by its location <Y,X>
 typedef Location Node;	
@@ -23,17 +24,12 @@ typedef std::vector<std::vector<int>> GameEdgesCosts;
 typedef std::vector<VanInfo> VanList;
 // Array of deliveries entries
 typedef std::vector<DeliveryInfo> DeliveryList;
+typedef std::vector<Location> Path;
 // Set of instructions maped to each van
 typedef std::map<int,std::vector<Location>> InstructionsSet;
 //typedef InstructionsSet::iterator InstructionsSetIterator;
 
-struct hash_pair {
-    template <typename T, typename U>
-    std::size_t operator ()(std::pair<T, U> const& p) const {
-        using std::hash;
-        return hash<T>()(p.first) ^ hash<T>()(p.second);
-    }
-};
+
 
 struct GameInfo{
 	int time;
@@ -54,9 +50,9 @@ struct GameInfo{
 class Edge;	// forward declaration
 
 struct NodeEntry{
-	Location fromNode;
-	Location node;	// considered node
-	Edge* edge;	// the edge that led to the node Edge*
+	NodeEntry* from;
+	Node node;	// considered node
+	Location edge;	// the edge that led to the node Edge*
 	int computedCost;	// g(n)
 	int expectedTotalCost; // f(n) = g(n) + h(n)
 
@@ -74,4 +70,13 @@ inline bool operator> (const NodeEntry& node1, const NodeEntry& node2){
 typedef std::vector<NodeEntry> NodeEntryList;
 //typedef priority_queue<NodeEntry, NodeEntryList, less<NodeEntry>> JobQueue;
 //typedef priority_queue<NodeEntry> NodeEntryList2;
+
+struct hash_pair {
+    template <typename T, typename U>
+    std::size_t operator ()(std::pair<T, U> const& p) const {
+        using std::hash;
+        return hash<T>()(p.first) ^ hash<T>()(p.second);
+    }
+};
+
 #endif
