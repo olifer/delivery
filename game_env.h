@@ -45,6 +45,7 @@ private:
 	void GameEnv::removeTaskByDelivery(__int8 deliveryNum);
 	void GameEnv::removeTaskByVan(__int8 vanNum);
 	void GameEnv::removeTask(__int8 deliveryNum, __int8 vanNum);
+	bool isAdjacent(Location edge1, Location edge2);
 	std::vector<Edge> getOutgoingEdges(Node fromNode);
 	Path findRoad(Node start, Node end,
 		unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2));

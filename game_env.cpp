@@ -218,7 +218,7 @@ Path GameEnv::findRoad(Node start, Node goal,
 					open.push(newEntry);
 					// keep track of road
 					road[newEntry.edge] = entry.edge;
-				} else { // visited node, does not matter if it either closed or open set
+				} /*else { // visited node, does not matter if it either closed or open set
 					int g = entry.computedCost + e->getCost();
 					// check if we can improve the cost
 					if(visited[next].computedCost > g){
@@ -237,7 +237,7 @@ Path GameEnv::findRoad(Node start, Node goal,
 						// a searching operation across the open set.
 						open.push(visited[next]);
 					}
-				}
+				}*/
 			}
 		}
 
@@ -249,6 +249,8 @@ Path GameEnv::findRoad(Node start, Node goal,
 			pathToGoal.push_back(currentEdge);
 			currentEdge = road[currentEdge];
 		}
+
+		reverse(pathToGoal.begin(),pathToGoal.end());
 
 		return pathToGoal;
 }
@@ -276,13 +278,35 @@ bool GameEnv::checkPath(Node start, Node end,
 			Y = edge->first;
 			nextY = next->first;
 			X = edge->second;
-			nextX = next->second;
-			isCorrect &= (abs(Y - nextY) + (abs(X - nextX))) == 1; // 
+			nextX = next->second;		
+			//isCorrect &= (abs(Y - nextY) + (abs(X - nextX))) == 1; // 
+			isCorrect &= isAdjacent(*edge, *next); 
 		}
 		// if I'm here something went wrong.
 		return false;
 }
+bool GameEnv::isAdjacent(Location edge1, Location edge2){
+	bool result = true;
+	int Y,X,nextY,nextX,dX, dY;
 
+	Y = edge1.first;
+	nextY = edge2.first;
+	X = edge1.second;
+	nextX = edge2.second;
+	dX = abs(edge1.second - edge2.second);
+	dY = abs(edge1.first - edge2.first);
+
+	if( Y%2==0 && nextY%2==0){// -- horizontal plane
+		result = (dY == 0 && dX == 1);
+	} 
+	else if(Y%2==0 || nextY%2==0){// |_ perpendicular
+		result = (dY == 1 && dX == 0) || (dY == 1 && dX == 1);
+	} else {
+		// edges are in vertical plane
+		result = (dY == 2 && dX == 0);
+	}
+	return result;
+}
 /* Calculate idean distance between two nodes */
 unsigned  __int8 GameEnv::euclideanDistance(Node node1, Node node2) {
 	__int8 deltaY = node1.first - node2.first;
