@@ -6,6 +6,8 @@
 #include "DeliveryManClient.h"
 #pragma comment (lib,"DeliveryManClient")
 
+#include <queue>
+
 #define G_MATRIX_WIDTH 40	// width of the game matrix
 #define G_MATRIX_LENGTH 40	// length of the game matrix
 // apprx. update interval of the traffic conditions
@@ -25,7 +27,13 @@ typedef std::vector<DeliveryInfo> DeliveryList;
 typedef std::map<int,std::vector<Location>> InstructionsSet;
 //typedef InstructionsSet::iterator InstructionsSetIterator;
 
-
+struct hash_pair {
+    template <typename T, typename U>
+    std::size_t operator ()(std::pair<T, U> const& p) const {
+        using std::hash;
+        return hash<T>()(p.first) ^ hash<T>()(p.second);
+    }
+};
 
 struct GameInfo{
 	int time;
@@ -46,13 +54,24 @@ struct GameInfo{
 class Edge;	// forward declaration
 
 struct NodeEntry{
-	Location* _node;	// considered node
-	Edge* _edge;	// the edge that led to the node
-	int _computedCost;	// g(n)
-	int _estimatedTotalCost; // f(n) = g(n) + h(n)
-};
+	Location fromNode;
+	Location node;	// considered node
+	Edge* edge;	// the edge that led to the node Edge*
+	int computedCost;	// g(n)
+	int expectedTotalCost; // f(n) = g(n) + h(n)
 
+	// NodeEntries are equal if their nodes have equal <Y,X>
+    bool operator==(const NodeEntry& entry) const
+    {
+        return (node == entry.node);
+    }
+};
+/* Overload < of NodeEntry for usage in priority queue*/
+inline bool operator> (const NodeEntry& node1, const NodeEntry& node2){
+	return node1.expectedTotalCost > node2.expectedTotalCost;
+}
 // List of node entries (intended for open/closed sets)
 typedef std::vector<NodeEntry> NodeEntryList;
-
+//typedef priority_queue<NodeEntry, NodeEntryList, less<NodeEntry>> JobQueue;
+//typedef priority_queue<NodeEntry> NodeEntryList2;
 #endif

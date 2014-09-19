@@ -10,9 +10,8 @@ class GameEnv {
 	GameNodesTypes _gameNodesTypes;
 	GameInfo _gameInfo;
 public:
-	GameEnv(DM_Client *client);
+	GameEnv(DM_Client *client){ _client = client; }
 	~GameEnv(void);
-	std::vector<Edge> getOutgoingEdges(Node fromNode);
 	bool isTimeElapsed () { return (_gameInfo.time > 1440); }
 	void spreadOut(void);
 	void updateGameInfo(void);
@@ -24,6 +23,12 @@ public:
 private:
 	void clearGameInfo(void); 
 	int getFreeVanNumber(void); 
+	std::vector<Edge> getOutgoingEdges(Node fromNode);
+	NodeEntry findRoad(Node start, Node end, GameNodesTypes* nodes,
+		unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2));
+	unsigned  __int8 euclideanDistance(Node node1, Node node2);
+	unsigned  __int8 euclideanDistanceFast(Node node1, Node node2);
+	unsigned  __int8 manhattanDistance(Node node1, Node node2);
 };
 
 #endif

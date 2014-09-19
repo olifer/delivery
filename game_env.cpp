@@ -1,11 +1,13 @@
 #include "game_env.h"
+#include "pqueue.h"
+#include <unordered_map>
 #include <algorithm>    // std::find
 using namespace std;
 
 /*----------------------------Constructors-----------------------------------*/
-GameEnv::GameEnv(DM_Client *client){
+/*GameEnv::GameEnv(DM_Client *client){
 	_client = client;
-}
+}*/
 /*----------------------------Interfaces-------------------------------------*/
 /* 
 *	Should be run first.
@@ -50,6 +52,35 @@ void GameEnv::spreadOut(void){
 	sendInstructions(instructionsSet);
 }
 
+void GameEnv::assignDeliveries(void){
+	updateGameInfo();
+	findRoad(make_pair(20,20),make_pair(20,20),&_gameNodesTypes, &GameEnv::euclideanDistance);
+	if(!_gameInfo.waitingDeliveries.empty()){
+		int van_num ; // we have delivery!
+		if( van_num = getFreeVanNumber() != -1 ){
+			// we have a free van, time to pick-up delivery!
+		}
+	}
+}
+
+/* Return Free Van*/
+int GameEnv::getFreeVanNumber(void) {
+	
+	/*auto pred = [](const VanInfo &van) {
+		return van.instructions.empty() && van.cargo == -1;
+	};
+
+	VanList::iterator free_vans = 
+		find_if(_gameInfo.vans.begin(), _gameInfo.vans.end(), pred);
+
+	return *free_vans;*/
+	/* temporal */
+	if(_gameInfo.vans[0].instructions.empty() && _gameInfo.vans[0].cargo == -1){
+		return 0;
+	} else {
+		return -1;
+	}
+}
 
 /* 
 	Get outgoing edges from the node
@@ -57,7 +88,7 @@ void GameEnv::spreadOut(void){
 vector<Edge> GameEnv::getOutgoingEdges(Node fromNode){
 	vector<Edge> edges;
 	Node nextNode;
-	Location loc;
+	Node loc;
 	int cost;
 
 	edges.reserve(4);    
@@ -96,33 +127,47 @@ vector<Edge> GameEnv::getOutgoingEdges(Node fromNode){
 	return edges;
 }
 
-void GameEnv::assignDeliveries(void){
-	updateGameInfo();
-	if(!_gameInfo.waitingDeliveries.empty()){
-		int van_num ; // we have delivery!
-		if( van_num = getFreeVanNumber() != -1 ){
-			// we have a free van, time to pick-up delivery!
-		}
-	}
+NodeEntry GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes, 
+	unsigned  __int8 (GameEnv::*heuristic)(Node, Node)){
+		//(this->*heuristic)();
+		vector<Node> path;
+		vector<Edge> edges;
+		edges.reserve(4);
+
+		unordered_map<Node, int, hash_pair> closedSet;
+		// frontier
+		priority_queue<NodeEntry, NodeEntryList, greater<NodeEntry>> openSet; 
+
+		// Initialization
+		Node next;
+		NodeEntry current, nextNodeEntry;
+		
+		current.computedCost = 0;
+		current.expectedTotalCost = 10;
+		current.node = start;
+		
+		// dummy 
+		return current;
 }
 
-/* Return Free Van*/
-int GameEnv::getFreeVanNumber(void) {
-	
-	/*auto pred = [](const VanInfo &van) {
-		return van.instructions.empty() && van.cargo == -1;
-	};
+/* Calculate idean distance between two nodes */
+unsigned  __int8 GameEnv::euclideanDistance(Node node1, Node node2) {
+	__int8 deltaY = node1.first - node2.first;
+	__int8 deltaX = node1.second - node2.second;
+	return (int) (sqrt(pow(deltaY,2.0)+pow(deltaX,2.0)) + 0.5 );
+}
 
-	VanList::iterator free_vans = 
-		find_if(_gameInfo.vans.begin(), _gameInfo.vans.end(), pred);
+unsigned  __int8 GameEnv::euclideanDistanceFast(Node node1, Node node2) {
+	__int8 deltaY = abs(node1.first - node2.first);
+	__int8 deltaX = abs(node1.second - node2.second);
+	return deltaY+deltaX; 
+}
 
-	return *free_vans;*/
-	/* temporal */
-	if(_gameInfo.vans[0].instructions.empty() && _gameInfo.vans[0].cargo == -1){
-		return 0;
-	} else {
-		return -1;
-	}
+/* Calculate Manhattan distance between two nodes */
+unsigned  __int8 GameEnv::manhattanDistance(Node node1, Node node2) {
+	__int8 deltaY = abs(node1.first - node2.first);
+	__int8 deltaX = abs(node1.second - node2.second);
+	return deltaY+deltaX;
 }
 /*-------------------------Private Interfaces--------------------------------*/
 void GameEnv::clearGameInfo(void){
@@ -132,8 +177,8 @@ void GameEnv::clearGameInfo(void){
 	_gameInfo.activeDeliveries.clear();
 	_gameInfo.completedDeliveries.clear();
 }
+
 /*----------------------------Clean-up---------------------------------------*/
 
 GameEnv::~GameEnv(){
-	delete _client;
 }
