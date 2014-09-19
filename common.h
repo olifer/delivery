@@ -47,10 +47,7 @@ struct GameInfo{
 *	and intended to algorithm processing and path reconstruction. 
 */
 
-class Edge;	// forward declaration
-
 struct NodeEntry{
-	NodeEntry* from;
 	Node node;	// considered node
 	Location edge;	// the edge that led to the node Edge*
 	int computedCost;	// g(n)
