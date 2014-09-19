@@ -1,5 +1,6 @@
 #include "game_env.h"
 #include <algorithm>    // std::find
+#include <functional>   // passing functions as parameters.
 using namespace std;
 
 /*----------------------------Constructors-----------------------------------*/
