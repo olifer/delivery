@@ -2,6 +2,7 @@
 #define GAME_ENV_H
 
 #include <unordered_map>
+#include <functional>
 #include "common.h"
 #include "edge.h"
 

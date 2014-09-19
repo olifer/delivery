@@ -1,6 +1,7 @@
 #include "game_env.h"
-#include "pqueue.h"
+//#include "pqueue.h"
 #include <algorithm>    // std::find
+#include <functional>   // passing functions as parameters.
 using namespace std;
 
 /*----------------------------Constructors-----------------------------------*/
@@ -226,7 +227,7 @@ Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes,
 		}
 
 		Path pathToGoal;
-		pathToGoal.reserve(1600);
+		pathToGoal.reserve(120);
 		Location currentEdge = entry.edge; 
 		// Make path
 		while(currentEdge.first>=0){
