@@ -1,6 +1,6 @@
 #include "game_env.h"
 #include <algorithm>    // std::find
-#include <functional>   // passing functions as parameters.
+//#include <functional>   // passing functions as parameters.
 using namespace std;
 
 /*----------------------------Constructors-----------------------------------*/
@@ -61,15 +61,29 @@ void GameEnv::assignDeliveries(void){
 		if((deliveryNum=getAvailableDelivery()) != -1){
 			DeliveryInfo delivery = _gameInfo.waitingDeliveries[0];
 			//if(_activeCargoFreeVans[]
-			int van_num ; // we have delivery!
-			if( van_num = getFreeVanNumber() != -1 ){
+			int vanNum; // we have delivery!
+			if( (vanNum = getFreeVanNumber()) != -1 ){
 				// we have a free van, time to pick-up delivery!
-			
-				Path road = findRoad(_gameInfo.vans[van_num].location, 
+				Path road = findRoad(_gameInfo.vans[vanNum].location, 
 					delivery.pickUp,&_gameNodesTypes, &GameEnv::euclideanDistanceFast); 
 			}
 		}
 	}
+}
+
+void GameEnv::scheduleDeliveryTask(__int8 deliveryNum, __int8 vanNum){
+	_activeTasks.deliveries[deliveryNum] = vanNum;
+	_activeTasks.vans[vanNum] = deliveryNum;
+}
+
+void GameEnv::removeTaskByDelivery(__int8 deliveryNum){
+	__int8 vanNum = _activeTasks.deliveries[deliveryNum];
+	removeTask(deliveryNum, vanNum);
+}
+
+void GameEnv::removeTask(__int8 deliveryNum, __int8 vanNum){
+	_activeTasks.vans.erase(vanNum);
+	_activeTasks.deliveries.erase(deliveryNum);
 }
 
 /* Retrieve a dilivery that is not a pick-up goal for any van */

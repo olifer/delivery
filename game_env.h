@@ -35,10 +35,14 @@ public:
 private:
 	void clearGameInfo(void); 
 	int getFreeVanNumber(void); 
-	__int8 getAvailableDelivery(void); 
+	__int8 getAvailableDelivery(void);
+	void GameEnv::scheduleDeliveryTask(__int8 deliveryNum, __int8 vanNum);
+	void GameEnv::removeTaskByDelivery(__int8 deliveryNum);
+	void GameEnv::removeTaskByVan(__int8 vanNum);
+	void GameEnv::removeTask(__int8 deliveryNum, __int8 vanNum);
 	std::vector<Edge> getOutgoingEdges(Node fromNode);
 	Path findRoad(Node start, Node end, GameNodesTypes* nodes,
-		unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2));
+	unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2));
 	unsigned  __int8 euclideanDistance(Node node1, Node node2);
 	unsigned  __int8 euclideanDistanceFast(Node node1, Node node2);
 	unsigned  __int8 manhattanDistance(Node node1, Node node2);
