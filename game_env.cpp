@@ -1,5 +1,4 @@
 #include "game_env.h"
-#include "pqueue.h"
 #include <algorithm>    // std::find
 using namespace std;
 
@@ -57,8 +56,8 @@ void GameEnv::assignDeliveries(void){
 	/*Path road = findRoad(make_pair(10,20), 
 				make_pair(30,40),&_gameNodesTypes, &GameEnv::euclideanDistanceFast); */
 	if(!_gameInfo.waitingDeliveries.empty()){
-		int i=0;
-		//while(!_activeTasks.deliveries[i].count()){
+		__int8 deliveryNum;
+		if((deliveryNum=getAvailableDelivery()) != -1){
 			DeliveryInfo delivery = _gameInfo.waitingDeliveries[0];
 			//if(_activeCargoFreeVans[]
 			int van_num ; // we have delivery!
@@ -68,15 +67,17 @@ void GameEnv::assignDeliveries(void){
 				Path road = findRoad(_gameInfo.vans[van_num].location, 
 					delivery.pickUp,&_gameNodesTypes, &GameEnv::euclideanDistanceFast); 
 			}
-		//}
+		}
 	}
 }
 
+/* Retrieve a dilivery that is not a pick-up goal for any van */
 __int8 GameEnv::getAvailableDelivery(void){
 	for(size_t i=0; i<_gameInfo.waitingDeliveries.size(); i++){
-		//if(_activeTasks.deliveries[_gameInfo.waitingDeliveries[i].Number].count()){
-		//}
-	}
+		if(!_activeTasks.deliveries.count(_gameInfo.waitingDeliveries[i].Number)){
+			return _gameInfo.waitingDeliveries[i].Number;
+		}
+	}	
 
 	return -1;
 }
@@ -202,7 +203,7 @@ Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes,
 					open.push(newEntry);
 					// keep track of road
 					road[newEntry.edge] = entry.edge;
-				} else { // visited node, does not matter if it either closed or open set
+				} else { // visited node, does not matter if it in either closed or open set
 					int g = entry.computedCost + edges[i].getCost();
 					// check if we can improve the cost
 					if(visited[next].computedCost > g){
@@ -226,7 +227,7 @@ Path GameEnv::findRoad(Node start, Node goal, GameNodesTypes* nodes,
 		}
 
 		Path pathToGoal;
-		pathToGoal.reserve(1600);
+		pathToGoal.reserve(120);
 		Location currentEdge = entry.edge; 
 		// Make path
 		while(currentEdge.first>=0){
