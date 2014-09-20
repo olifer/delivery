@@ -150,6 +150,10 @@ bool GameEnv::scheduleDeliveryTask(__int8 deliveryNum, __int8 vanNum){
 	_activeTasks.pickup2del[pickUp] = deliveryNum;
 	_activeTasks.del2pickup[deliveryNum] = pickUp;
 
+	if(_activeTasks.deliveries.size()!=_activeTasks.vans.size()){
+		//
+		int i = 3+1;
+	}
 	return true;
 }
 
@@ -164,6 +168,10 @@ void GameEnv::removeTask(__int8 deliveryNum, __int8 vanNum){
 	Location location = _activeTasks.del2pickup[deliveryNum];
 	_activeTasks.pickup2del.erase(location);
 	_activeTasks.del2pickup.erase(deliveryNum);
+
+	if(_activeTasks.deliveries.size()!=_activeTasks.vans.size()){
+		int i = 3+1;
+	}
 }
 
 /* Retrieve the oldest dilivery that is not a pick-up goal for any van */
@@ -450,4 +458,5 @@ void GameEnv::clearGameInfo(void){
 /*----------------------------Clean-up---------------------------------------*/
 
 GameEnv::~GameEnv(){
+	delete _client;
 }

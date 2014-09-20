@@ -27,10 +27,11 @@ class GameEnv {
 	ActiveTasks _activeTasks;
 public:
 	GameEnv(DM_Client *client){ 
-		_client = client; _activeTasks = ActiveTasks(); 
+		_client = client; 
+		_activeTasks = ActiveTasks(); 
 	}
 	~GameEnv(void);
-	bool isTimeElapsed () { return (_gameInfo.time > G_END_TIME); }
+	bool isTimeElapsed () { return (_gameInfo.time >= G_END_TIME); }
 	void spreadOut(void);
 	void updateGameInfo(void);
 	void startGame(void);
