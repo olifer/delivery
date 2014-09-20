@@ -8,6 +8,7 @@ class Edge {
 	int _cost;
 	Location _location;
 public:
+	typedef std::vector<Edge>::iterator edge_itr;
 	int getCost(void) { return _cost; }
 	Location getLocation(void) { return _location; }
 	Location getNextNode(Location fromNode) { return fromNode == _node1 ? _node2 : _node1; }

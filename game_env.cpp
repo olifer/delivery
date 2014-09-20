@@ -1,12 +1,7 @@
 #include "game_env.h"
-#include <algorithm>    // std::find
-//#include <functional>   // passing functions as parameters.
+//#include <algorithm>    // std::find
 using namespace std;
 
-/*----------------------------Constructors-----------------------------------*/
-/*GameEnv::GameEnv(DM_Client *client){
-	_client = client;
-}*/
 /*----------------------------Interfaces-------------------------------------*/
 /* 
 *	Should be run first.
@@ -16,6 +11,17 @@ void GameEnv::startGame(void){
 	_client->startGame(_gameNodesTypes, output);
 }
 /* 
+*	Send instructions to the van.
+*/
+
+void GameEnv::sendInstructionsToVan(uint8_t van, Path instructions){
+	wstring output;
+	InstructionsSet instructionsSet;
+	instructionsSet[van].reserve(instructions.size());
+	instructionsSet[van] = instructions;
+	_client->sendInstructions(instructionsSet, output);
+}
+/* 
 *	Send instructions to the vans.
 */
 void GameEnv::sendInstructions(InstructionsSet sendInstructions){
@@ -23,12 +29,13 @@ void GameEnv::sendInstructions(InstructionsSet sendInstructions){
 	_client->sendInstructions(sendInstructions, output);
 }
 /* 
-*	Update game information. //ASK: How frequently?
+*	Update game information.
 */
 void GameEnv::updateGameInfo(void){
 	clearGameInfo();
-	_client->getInformation(_gameInfo.time, _gameInfo.edges, _gameInfo.vans, _gameInfo.waitingDeliveries,
-			_gameInfo.activeDeliveries, _gameInfo.completedDeliveries, _gameInfo.output);
+	_client->getInformation(_gameInfo.time, _gameInfo.edges, _gameInfo.vans,
+		_gameInfo.waitingDeliveries, _gameInfo.activeDeliveries, 
+		_gameInfo.completedDeliveries, _gameInfo.output);
 }
 
 /* 
@@ -51,29 +58,98 @@ void GameEnv::spreadOut(void){
 	sendInstructions(instructionsSet);
 }
 
+void GameEnv::manageDeliveries(void){
+	Location vanLoc, pickupLoc, dropoffLoc, goal;
+	uint8_t deliveryNum, vanNumber;
+
+	for(uint8_t i=0; i<N_VANS; i++){
+		if(/*_gameInfo.vans[i].cargo != -1 &&*/ _activeTasks.vans.count(i)) {
+			vanNumber = _gameInfo.vans[i].Number;
+			vanLoc = _gameInfo.vans[i].location;
+			deliveryNum = _activeTasks.vans[vanNumber];
+			pickupLoc = _activeTasks.del2pickup[deliveryNum];
+			if(vanLoc == pickupLoc){ // goal is reached!
+				removeTask(deliveryNum, vanNumber);
+				//dropoffLoc = 
+			} else { // accidental pickup
+				// conflict delivery
+				deliveryNum = _activeTasks.pickup2del[vanLoc];
+				uint8_t conflictVan = 
+					_activeTasks.deliveries[deliveryNum]; 
+				// clean instructions of the conflict van
+				sendInstructionsToVan(conflictVan, vector<Location>());
+				removeTask(deliveryNum, conflictVan);
+			}
+
+			dropoffLoc = getDropOff(deliveryNum);
+			if(dropoffLoc.first != -1){ 
+				// find and send drop off instructions to the van
+				Path road = findRoad(vanLoc, 
+					dropoffLoc, &GameEnv::euclideanDistanceFast); 
+				sendInstructionsToVan(vanNumber, road);
+			} else {  /* otherwise something went wrong */ }
+		}
+	}
+}
+
+Node GameEnv::getDropOff(uint8_t deliveryNum){
+	auto pred = [deliveryNum](const DeliveryInfo &delivery) {
+		return delivery.Number == deliveryNum;
+	};
+
+	DeliveryList::iterator deliveryInfo = 
+		find_if(_gameInfo.activeDeliveries.begin(), 
+			_gameInfo.activeDeliveries.end(), pred);
+
+	if(deliveryInfo == _gameInfo.activeDeliveries.end()){
+		return make_pair(-1,-1);
+	} else {
+		return deliveryInfo[0].dropOff;
+	}
+}
+
 void GameEnv::assignDeliveries(void){
-	updateGameInfo();
-	//findRoad(make_pair(20,20),make_pair(20,20),&_gameNodesTypes, &GameEnv::euclideanDistance);
-	/*Path road = findRoad(make_pair(10,20), 
-				make_pair(30,40),&_gameNodesTypes, &GameEnv::euclideanDistanceFast); */
+	//updateGameInfo();
 	if(!_gameInfo.waitingDeliveries.empty()){
-		__int8 deliveryNum;
-		if((deliveryNum=getAvailableDelivery()) != -1){
-			DeliveryInfo delivery = _gameInfo.waitingDeliveries[0];
-			//if(_activeCargoFreeVans[]
-			int vanNum; // we have delivery!
-			if( (vanNum = getFreeVanNumber()) != -1 ){
+		DeliveryInfo *deliveryInfo;
+		VanInfo* vanInfo;
+		//uint8_t deliveryNum, vanNum;
+		if((deliveryInfo=getAvailableDelivery()) != NULL &&
+				(vanInfo = getFreeVanNumber(deliveryInfo->pickUp)) != NULL){
+			Location pickUp	= deliveryInfo->pickUp;
+			Location vanLoc	= vanInfo->location;
+			uint8_t deliveryNum	= deliveryInfo->Number;			
+			uint8_t vanNum	= vanInfo->Number;
+			if(scheduleDeliveryTask(deliveryNum, vanNum)){
+				//Location pickUp = _activeTasks.del2pickup[deliveryNum];
 				// we have a free van, time to pick-up delivery!
-				Path road = findRoad(_gameInfo.vans[vanNum].location, 
-					delivery.pickUp, &GameEnv::euclideanDistanceFast); 
+				Path road = findRoad(vanLoc, pickUp, 
+						&GameEnv::euclideanDistanceFast); 
+				sendInstructionsToVan(vanNum, road);
 			}
 		}
 	}
 }
 
-void GameEnv::scheduleDeliveryTask(__int8 deliveryNum, __int8 vanNum){
+
+bool GameEnv::scheduleDeliveryTask(__int8 deliveryNum, __int8 vanNum){
+	Location pickUp = make_pair(-1,-1);
+	for(uint8_t i=0; i<_gameInfo.waitingDeliveries.size(); i++){
+		if(_gameInfo.waitingDeliveries[i].Number == deliveryNum) {
+			pickUp = _gameInfo.waitingDeliveries[i].pickUp;
+			break;
+		}
+	}
+	if(pickUp.first == -1){ // no delivery found
+		return false;
+	}
+
 	_activeTasks.deliveries[deliveryNum] = vanNum;
 	_activeTasks.vans[vanNum] = deliveryNum;
+	_activeTasks.pickup2del[pickUp] = deliveryNum;
+	_activeTasks.del2pickup[deliveryNum] = pickUp;
+
+	return true;
 }
 
 void GameEnv::removeTaskByDelivery(__int8 deliveryNum){
@@ -84,35 +160,65 @@ void GameEnv::removeTaskByDelivery(__int8 deliveryNum){
 void GameEnv::removeTask(__int8 deliveryNum, __int8 vanNum){
 	_activeTasks.vans.erase(vanNum);
 	_activeTasks.deliveries.erase(deliveryNum);
+	Location location = _activeTasks.del2pickup[deliveryNum];
+	_activeTasks.pickup2del.erase(location);
+	_activeTasks.del2pickup.erase(deliveryNum);
 }
 
-/* Retrieve a dilivery that is not a pick-up goal for any van */
-__int8 GameEnv::getAvailableDelivery(void){
+/* Retrieve the oldest dilivery that is not a pick-up goal for any van */
+DeliveryInfo* GameEnv::getAvailableDelivery(void){
+	int maxTime = G_END_TIME;
+	DeliveryInfo* deliveryInfo = NULL;
 	for(size_t i=0; i<_gameInfo.waitingDeliveries.size(); i++){
 		if(!_activeTasks.deliveries.count(_gameInfo.waitingDeliveries[i].Number)){
-			return _gameInfo.waitingDeliveries[i].Number;
+			if(_gameInfo.waitingDeliveries[i].Time < maxTime){
+				maxTime = _gameInfo.waitingDeliveries[i].Time;
+				deliveryInfo = &_gameInfo.waitingDeliveries[i];
+			}
 		}
 	}	
 
-	return -1;
+	return deliveryInfo;
 }
-/* Return Free Van*/
-int GameEnv::getFreeVanNumber(void) {
-	
+/* Retrieve the nearest free van to the goal loaction */
+VanInfo* GameEnv::getFreeVanNumber(Node goal) {
 	/*auto pred = [](const VanInfo &van) {
 		return van.instructions.empty() && van.cargo == -1;
 	};
 
 	VanList::iterator free_vans = 
 		find_if(_gameInfo.vans.begin(), _gameInfo.vans.end(), pred);
+	*/
+	VanInfo* nearestVan = NULL;
+	uint8_t nearestDist, dist;
+	nearestDist = 100;
+	for(uint8_t i=0; i<N_VANS; i++){
+		if(_gameInfo.vans[i].instructions.empty() 
+				&& _gameInfo.vans[i].cargo == -1){
+				dist = euclideanDistanceFast(_gameInfo.vans[i].location, goal);
+				if(dist<nearestDist){
+					nearestDist = dist;
+					nearestVan = &_gameInfo.vans[i];
+				}
+		}
+	}
+
+	return nearestVan;
+
+	/*if(free_vans == _gameInfo.vans.end()){
+		return -1;
+	}
+
+	for(Edge::edge_itr e = edgesFromEnd.begin(); 
+					e != edgesFromEnd.end(); ++e)
 
 	return *free_vans;*/
 	/* temporal */
-	if(_gameInfo.vans[0].instructions.empty() && _gameInfo.vans[0].cargo == -1){
+	/*if(_gameInfo.vans[0].instructions.empty() && _gameInfo.vans[0].cargo == -1){
 		return 0;
 	} else {
 		return -1;
-	}
+	}*/
 }
 
 /* 
@@ -160,8 +266,7 @@ vector<Edge> GameEnv::getOutgoingEdges(Node fromNode){
 	return edges;
 }
 
-Path GameEnv::findRoad(Node start, Node goal, 
-	unsigned  __int8 (GameEnv::*heuristic)(Node, Node)){
+Path GameEnv::findRoad(Node start, Node goal, h_func heuristic){
 		vector<Edge> edges;
 		edges.reserve(4);
 
@@ -172,7 +277,6 @@ Path GameEnv::findRoad(Node start, Node goal,
 		// frontier
 		priority_queue<NodeEntry, NodeEntryList, greater<NodeEntry>> open; 
 		//priority_queue<NodeEntry, NodeEntryList, greater<NodeEntry>> openSet; 
-
 
 		// Initialization
 		Node current, next;
@@ -203,7 +307,7 @@ Path GameEnv::findRoad(Node start, Node goal,
 			edges.empty();
 			edges = getOutgoingEdges(entry.node);
 
-			for(vector<Edge>::iterator e = edges.begin(); e != edges.end(); e++){
+			for(Edge::edge_itr e = edges.begin(); e != edges.end(); e++){
 				next = e->getNextNode(entry.node);
 
 				if(!visited.count(next)){ // unvisited node
@@ -211,19 +315,24 @@ Path GameEnv::findRoad(Node start, Node goal,
 					newEntry.edge = e->getLocation();
 					newEntry.node = next;
 					newEntry.computedCost = entry.computedCost + e->getCost();
-					newEntry.expectedTotalCost = newEntry.computedCost + (this->*heuristic)(newEntry.node, goal);
+					newEntry.expectedTotalCost = newEntry.computedCost + 
+						(this->*heuristic)(newEntry.node, goal);
 					// place to visited set
-					visited[newEntry.node] = newEntry; //newEntry.edge.first == entry.edge.first && newEntry.edge.second == entry.edge.second
+					visited[newEntry.node] = newEntry; 
+					//newEntry.edge.first == entry.edge.first 
+					// && newEntry.edge.second == entry.edge.second
 					// place to frontier
 					open.push(newEntry);
 					// keep track of road
 					road[newEntry.edge] = entry.edge;
-				} /*else { // visited node, does not matter if it either closed or open set
+				} else if(0){ 
+					// visited node, does not matter if it either in 
+					// the closed or open set
 					int g = entry.computedCost + e->getCost();
 					// check if we can improve the cost
 					if(visited[next].computedCost > g){
-						// no need to calculate the heuristic function again, since it 
-						// remains the same for the specific node
+						// no need to calculate the heuristic function again,
+						// since it remains the same for the specific node
 						visited[next].expectedTotalCost = g + 
 							(visited[next].expectedTotalCost - visited[next].computedCost);
 						visited[next].computedCost = g;
@@ -237,12 +346,12 @@ Path GameEnv::findRoad(Node start, Node goal,
 						// a searching operation across the open set.
 						open.push(visited[next]);
 					}
-				}*/
+				}
 			}
 		}
 
 		Path pathToGoal;
-		pathToGoal.reserve(120);
+		pathToGoal.reserve(G_MATRIX_LENGTH*3);
 		Location currentEdge = entry.edge; 
 		// Make path
 		while(currentEdge.first>=0){
@@ -255,30 +364,32 @@ Path GameEnv::findRoad(Node start, Node goal,
 		return pathToGoal;
 }
 
-bool GameEnv::checkPath(Node start, Node end, 
-	unsigned  __int8 (GameEnv::*heuristic)(Node node1, Node node2)) {
+bool GameEnv::checkPath(Node start, Node end, h_func heuristic) {
 		bool isCorrect = true;
 		// Get the path.
 		Path path = findRoad(start, end, heuristic);
 
 		for(Path::iterator edge = path.begin(); edge != path.end(); ++edge) {
-			Path::iterator next = edge + 1; // get location of next edge in the matrix.
-			if(next == path.end()) {//If it is the last edge of the path, need to check it reaches the end.
-				vector<Edge> edgesFromEnd = getOutgoingEdges(end); // get edges from the end.
+			// get location of next edge in the matrix.
+			Path::iterator next = edge + 1; 
+			// If it is the last edge of the path, need to check it reaches 
+			// the end.
+			if(next == path.end()) {
+				// get edges from the end.
+				vector<Edge> edgesFromEnd = getOutgoingEdges(end); 
 				bool reachesEnd = false;
-				for(vector<Edge>::iterator e = edgesFromEnd.begin(); e != edgesFromEnd.end(); ++e) {
-					// Check that one of those edges have same location as the last edge of the path
+				for(Edge::edge_itr e = edgesFromEnd.begin(); 
+					e != edgesFromEnd.end(); ++e) {
+					// Check that one of those edges have same location as the 
+				    // last edge of the path
 					// (i.e. that the path actually reaches the goal)
-					reachesEnd |= ((e->getLocation().first == edge->first) & (e->getLocation().second == edge->second));
+					reachesEnd |= ((e->getLocation().first == edge->first) 
+						& (e->getLocation().second == edge->second));
 				}
 				return isCorrect & reachesEnd;
 			} 
-			// Check location of edges: it should only move by 1 unit in X OR in Y (not both).
-			int Y, nextY, X, nextX;
-			Y = edge->first;
-			nextY = next->first;
-			X = edge->second;
-			nextX = next->second;		
+			// Check location of edges: it should only move by 1 unit
+			// in X OR in Y (not both). - wrong assumption
 			//isCorrect &= (abs(Y - nextY) + (abs(X - nextX))) == 1; // 
 			isCorrect &= isAdjacent(*edge, *next); 
 		}
@@ -308,20 +419,20 @@ bool GameEnv::isAdjacent(Location edge1, Location edge2){
 	return result;
 }
 /* Calculate idean distance between two nodes */
-unsigned  __int8 GameEnv::euclideanDistance(Node node1, Node node2) {
+uint8_t GameEnv::euclideanDistance(Node node1, Node node2) {
 	__int8 deltaY = node1.first - node2.first;
 	__int8 deltaX = node1.second - node2.second;
 	return (int) (sqrt(pow(deltaY,2.0)+pow(deltaX,2.0)) + 0.5 );
 }
 
-unsigned  __int8 GameEnv::euclideanDistanceFast(Node node1, Node node2) {
+uint8_t GameEnv::euclideanDistanceFast(Node node1, Node node2) {
 	__int8 deltaY = abs(node1.first - node2.first);
 	__int8 deltaX = abs(node1.second - node2.second);
 	return deltaY+deltaX; 
 }
 
 /* Calculate Manhattan distance between two nodes */
-unsigned  __int8 GameEnv::manhattanDistance(Node node1, Node node2) {
+uint8_t GameEnv::manhattanDistance(Node node1, Node node2) {
 	__int8 deltaY = abs(node1.first - node2.first);
 	__int8 deltaX = abs(node1.second - node2.second);
 	return deltaY+deltaX;

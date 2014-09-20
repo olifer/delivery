@@ -8,12 +8,16 @@
 
 #include <queue>
 
+/* Game settings */
 #define G_MATRIX_WIDTH 40	// width of the game matrix
 #define G_MATRIX_LENGTH 40	// length of the game matrix
 // apprx. update interval of the traffic conditions
-#define G_UPDATE_INTERVAL 100	
+#define G_UPDATE_INTERVAL 100
+#define G_START_TIME 360 // 6:00	
+#define G_END_TIME 1440 // 24:00	
 #define N_VANS 5	
 
+typedef  unsigned __int8 uint8_t;
 // Game node represented by its location <Y,X>
 typedef Location Node;
 // 2D array representing types of game nodes
@@ -76,4 +80,11 @@ struct hash_pair {
     }
 };
 
+struct hash_pair_reverse {
+    template <typename T, typename U>
+    std::size_t operator ()(std::pair<T, U> const& p) const {
+        using std::hash;
+        return hash<T>()(p.first) ^ hash<T>()(p.second);
+    }
+};
 #endif
