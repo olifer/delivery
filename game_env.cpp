@@ -63,17 +63,18 @@ void GameEnv::manageDeliveries(void){
 	uint8_t deliveryNum, vanNumber;
 
 	for(uint8_t i=0; i<N_VANS; i++){
-		if(/*_gameInfo.vans[i].cargo != -1 &&*/ _activeTasks.vans.count(i)) {
+		if(_gameInfo.vans[i].cargo != -1 && _activeTasks.vans.count(i)) {
 			vanNumber = _gameInfo.vans[i].Number;
 			vanLoc = _gameInfo.vans[i].location;
 			deliveryNum = _activeTasks.vans[vanNumber];
+			//deliveryNum = _gameInfo.vans[i].cargo;//_activeTasks.vans[vanNumber];
 			pickupLoc = _activeTasks.del2pickup[deliveryNum];
-			if(vanLoc == pickupLoc){ // goal is reached!
+			if(deliveryNum == _gameInfo.vans[i].cargo){ // the delivery is picked up!
 				removeTask(deliveryNum, vanNumber);
 				//dropoffLoc = 
 			} else { // accidental pickup
 				// conflict delivery
-				deliveryNum = _activeTasks.pickup2del[vanLoc];
+				deliveryNum = _gameInfo.vans[i].cargo;//_activeTasks.pickup2del[vanLoc];
 				uint8_t conflictVan = 
 					_activeTasks.deliveries[deliveryNum]; 
 				// clean instructions of the conflict van
