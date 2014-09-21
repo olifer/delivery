@@ -19,7 +19,8 @@ int main(int argc, _TCHAR* argv[])
 	time_t start = time(NULL);
 
 	gameEnv.spreadOut();
-
+	gameEnv.updateGameInfo();
+	gameEnv.precomputeRoadTypes();
 	/*vector<Edge> edges;
 	edges.reserve(4);    
 	edges = gameEnv.getOutgoingEdges(make_pair(20,20));
@@ -30,10 +31,13 @@ int main(int argc, _TCHAR* argv[])
 
 	while(!gameEnv.isTimeElapsed()) {
 		gameEnv.updateGameInfo();
+		gameEnv.manageDefferedDeliveries();
 		gameEnv.manageDeliveries();
-		gameEnv.assignDeliveries();
-		// gameEnv.assignDeliveries();
-		//gameEnv.updateGameInfo();
+		//gameEnv.assignDeliveries();
+		gameEnv.assignDeliveriesParallel();
+		//gameEnv.spreadOutFreeVans();
+		
+
 		// dummy loop
 		// 1) Assign a delivery to each van.
 		// 2) Compute shortest path for each van to it's assigned target point.
@@ -46,6 +50,7 @@ int main(int argc, _TCHAR* argv[])
 		
 		//gameEnv.checkForAccidents();
 	}
+	gameEnv.~GameEnv();
 
 	return 0;
 }

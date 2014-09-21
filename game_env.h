@@ -13,14 +13,21 @@ struct ActiveTasks {
 	std::unordered_map<Location, int, hash_pair> pickup2del; 
 	// <delivery number location>
 	std::unordered_map<int, Location> del2pickup;
+	// <delivery number van number>
+	std::unordered_map<int, int> deferredDeliveries;
+	std::unordered_map<int, int> deferredVans;
 };
+
+		
 
 class GameEnv {
 	// ponter to heuristic function
 	typedef uint8_t (GameEnv::*h_func)(Node node1, Node node2);
-    static const int _spread_out_distance = 10;
+    static const int _spread_out_distance = 15;
+	std::vector<Node> _anchors;
 	DM_Client *_client;
 	GameNodesTypes _gameNodesTypes;
+	GameEdgesCosts _edgesTypes;
 	GameInfo _gameInfo;
 	// active tasks assign to vans with specification
 	// of the current goal type (pick-up:false, drop-off:true)
@@ -29,9 +36,15 @@ public:
 	GameEnv(DM_Client *client){ 
 		_client = client; 
 		_activeTasks = ActiveTasks(); 
+		Node arr[] = {std::make_pair(20,10),std::make_pair(30,20),
+			std::make_pair(20,30),std::make_pair(10,20),std::make_pair(20,20)};
+		_anchors.assign(arr,arr+5);
 	}
 	~GameEnv(void);
-	bool isTimeElapsed () { return (_gameInfo.time >= G_END_TIME); }
+	bool isTimeElapsed () { 
+		return (_gameInfo.time >= G_END_TIME 
+			|| _gameInfo.completedDeliveries.size()==TOTAL_DELIVERIES); 
+	}
 	void spreadOut(void);
 	void updateGameInfo(void);
 	void startGame(void);
@@ -41,10 +54,14 @@ public:
 	void computeInstructions(void /*same thing here*/); // A* algorithm 
 	void checkForAccidents(void);
 	uint8_t euclideanDistance(Node node1, Node node2);
-	uint8_t euclideanDistanceFast(Node node1, Node node2);
+	uint8_t roadBase(Node node1, Node node2);
 	uint8_t manhattanDistance(Node node1, Node node2);
 	bool checkPath(Node start, Node end, h_func heuristic);
 	void manageDeliveries(void);
+	void spreadOutFreeVans(void);
+	void manageDefferedDeliveries(void);
+	void precomputeRoadTypes(void);
+	void assignDeliveriesParallel(void);
 private:
 	void clearGameInfo(void); 
 	VanInfo* getFreeVanNumber(Node goal); 
@@ -56,8 +73,17 @@ private:
 	bool isAdjacent(Location edge1, Location edge2);
 	std::vector<Edge> getOutgoingEdges(Node fromNode);
 	Path findRoad(Node start, Node end, h_func heuristic);
+	Path findRoadOptimal(Node start, Node end, h_func heuristic);
 	void sendInstructionsToVan(uint8_t van, Path instructions);
 	Node getDropOff(uint8_t deliveryNum);
+	Node findNearestAnchor(Node node);
+	bool isAnchor(Node node);
+	void addDefferedDelivery(int deliveryNum, int vanNum);
+	Path findPath(Node deliveryNum, Node vanNum);
+	uint8_t GameEnv::repulsiveCenter(Node node1, Node node2);
 };
+//Node arr[] = {std::make_pair(20,10),std::make_pair(30,20),std::make_pair(20,30),std::make_pair(10,20)};
+//std::vector<int> TestVector(arr, arr+5);
+//const std::vector<Node> GameEnv::_anchors(arr,arr+5);
 
 #endif

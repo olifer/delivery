@@ -15,6 +15,7 @@
 #define G_UPDATE_INTERVAL 100
 #define G_START_TIME 360 // 6:00	
 #define G_END_TIME 1440 // 24:00	
+#define TOTAL_DELIVERIES 20	
 #define N_VANS 5	
 
 typedef  unsigned __int8 uint8_t;
