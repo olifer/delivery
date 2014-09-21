@@ -28,6 +28,14 @@ int main(int argc, _TCHAR* argv[])
 	edges = gameEnv.getOutgoingEdges(make_pair(40,40));*/
 	//for(int i=0;i<100;i++){
 	//bool isCorrect = gameEnv.checkPath(make_pair(0,0),make_pair(20,20), &GameEnv::euclideanDistance);
+	
+	// ALGO DEBUG FACILITIES
+	/*while(gameEnv.getGameTime()<800){gameEnv.updateGameInfo();};
+	DebugInfo estimates = gameEnv.TestAlgorithm(algo::dijkstra);
+	estimates = gameEnv.TestAlgorithm(algo::euclideanDistance);
+	estimates = gameEnv.TestAlgorithm(algo::manhattanDistance);
+	estimates = gameEnv.TestAlgorithm(algo::repulsiveCenter);*/
+
 
 	while(!gameEnv.isTimeElapsed()) {
 		gameEnv.updateGameInfo();

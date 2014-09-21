@@ -27,9 +27,30 @@ uint8_t GameEnv::manhattanDistance(Node node1, Node node2) {
 	return deltaY+deltaX;
 }
 
+/* Calculate Manhattan distance between two nodes */
+uint8_t GameEnv::dijkstra(Node node1, Node node2) {
+	return 0;
+}
+
 // USE HEURISTIC HERE
 Path GameEnv::findPath(Node start, Node end){
-	return findRoad(start, end, &GameEnv::repulsiveCenter); 
+	// manhattanDistance repulsiveCenter euclideanDistance dijkstra
+	return findRoad(start, end, &GameEnv::repulsiveCenter); //
+}
+
+Path GameEnv::findPathDebug(Node start, Node end, int h_func){
+	// manhattanDistance repulsiveCenter euclideanDistance dijkstra
+	
+	switch(h_func){
+		case algo::dijkstra: 
+			return findRoad(start, end, &GameEnv::dijkstra);
+		case algo::euclideanDistance: 
+			return findRoad(start, end, &GameEnv::euclideanDistance);
+		case algo::manhattanDistance: 
+			return findRoad(start, end, &GameEnv::manhattanDistance);
+		case algo::repulsiveCenter: 
+			return findRoad(start, end, &GameEnv::repulsiveCenter);
+	}
 }
 /*----------------------------Interfaces-------------------------------------*/
 /* 
@@ -489,7 +510,7 @@ Path GameEnv::findRoad(Node start, Node goal, h_func heuristic){
 					openTracker[newEntry.edge] = false;
 					// keep track of road
 					road[newEntry.edge] = entry.edge;
-				} /*else if(false){ //if(0)
+				} else { //if(0)
 					// visited node, does not matter if it either in 
 					// the closed or open set
 					int g = entry.computedCost + e->getCost();
@@ -512,7 +533,7 @@ Path GameEnv::findRoad(Node start, Node goal, h_func heuristic){
 						open.push(visited[next]);
 						openTracker[visited[next].edge] = true;
 					}
-				}*/
+				}
 			}
 		}
 
@@ -527,7 +548,47 @@ Path GameEnv::findRoad(Node start, Node goal, h_func heuristic){
 
 		reverse(pathToGoal.begin(),pathToGoal.end());
 
+		this->cost = entry.computedCost;
 		return pathToGoal;
+}
+
+/* return <total time, avg time>*/
+DebugInfo GameEnv::TestAlgorithm(int h_func) {
+	DebugInfo info= DebugInfo();
+	// constant distribution
+	Location arr[] = {std::make_pair(5, 40), std::make_pair(30, 4),
+		std::make_pair(7, 39),std::make_pair(7, 38),std::make_pair(37, 10)
+		,std::make_pair(8, 29),std::make_pair(14, 0),std::make_pair(17, 36),
+		std::make_pair(0, 0), std::make_pair(7, 39),std::make_pair(7, 38),
+		std::make_pair(37, 10),std::make_pair(20, 31),std::make_pair(31, 19),
+		std::make_pair(21, 28),std::make_pair(0, 0),std::make_pair(40, 13)};
+	
+	int sumOfCosts = 0, dummy[] = {73,72,3,68,70,57,69,75,74,3,68,50,38,32,77};
+	static int sumOfOptimalCosts = 1;
+	vector<int> optimal_costs(dummy,dummy+15);//sizeof(arr)/sizeof(make_pair<int,int>)
+	vector<int> costs;
+	Path path;
+
+	updateGameInfo();
+	int elapsed_game_units=_gameInfo.time;
+	clock_t begin = clock();
+	int size = 17;
+	for(int i=1; i < size; i++){
+		path = findPathDebug(arr[i-1],arr[i],h_func);
+		optimal_costs.push_back(cost);
+		sumOfCosts += cost;
+	}
+	clock_t end = clock();
+	updateGameInfo();
+	if(h_func == algo::dijkstra){
+		sumOfOptimalCosts = sumOfCosts;
+	}
+	info.avg_game_units=double (_gameInfo.time - elapsed_game_units)/(size-1);
+	info.elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	info.avg = info.elapsed_secs/(size-1);
+	info.quality = 2.0-(double)sumOfCosts/sumOfOptimalCosts;
+	info.avg_time = (double)sumOfCosts/((size-1)/2);
+	return info;
 }
 
 bool GameEnv::checkPath(Node start, Node end, h_func heuristic) {
