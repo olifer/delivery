@@ -3,6 +3,34 @@
 //#include <algorithm>    // std::find
 using namespace std;
 using namespace Concurrency;
+
+/* Calculate idean distance between two nodes */
+uint8_t GameEnv::euclideanDistance(Node node1, Node node2) {
+	__int8 deltaY = node1.first - node2.first;
+	__int8 deltaX = node1.second - node2.second;
+	return (int) (sqrt(pow(deltaY,2.0)+pow(deltaX,2.0)) + 0.5 );
+}
+
+uint8_t GameEnv::repulsiveCenter(Node node1, Node node2) {
+	uint8_t centerCost = std::max((uint8_t) 100, manhattanDistance(node1, make_pair(20,20)));
+	return (manhattanDistance(node1, node2) + (1 / centerCost));
+}
+/* Calculate idean distance between two nodes */
+uint8_t GameEnv::roadBase(Node node1, Node node2) {
+	return (int) (euclideanDistance(node1, node2) + 0.5 );
+}
+
+/* Calculate Manhattan distance between two nodes */
+uint8_t GameEnv::manhattanDistance(Node node1, Node node2) {
+	__int8 deltaY = abs(node1.first - node2.first);
+	__int8 deltaX = abs(node1.second - node2.second);
+	return deltaY+deltaX;
+}
+
+// USE HEURISTIC HERE
+Path GameEnv::findPath(Node start, Node end){
+	return findRoad(start, end, &GameEnv::repulsiveCenter); 
+}
 /*----------------------------Interfaces-------------------------------------*/
 /* 
 *	Should be run first.
@@ -210,9 +238,7 @@ void GameEnv::manageDefferedDeliveries(void){
 	}
 }
 
-Path GameEnv::findPath(Node start, Node end){
-	return findRoad(start, end, &GameEnv::repulsiveCenter); 
-}
+
 
 bool GameEnv::scheduleDeliveryTask(__int8 deliveryNum, __int8 vanNum){
 	Location pickUp = make_pair(-1,-1);
@@ -572,28 +598,7 @@ void GameEnv::precomputeRoadTypes(void){
 		}
 	}
 }
-/* Calculate idean distance between two nodes */
-uint8_t GameEnv::euclideanDistance(Node node1, Node node2) {
-	__int8 deltaY = node1.first - node2.first;
-	__int8 deltaX = node1.second - node2.second;
-	return (int) (sqrt(pow(deltaY,2.0)+pow(deltaX,2.0)) + 0.5 );
-}
 
-uint8_t GameEnv::repulsiveCenter(Node node1, Node node2) {
-	uint8_t centerCost = std::max((uint8_t) 100, manhattanDistance(node1, make_pair(20,20)));
-	return (manhattanDistance(node1, node2) + (1 / centerCost));
-}
-/* Calculate idean distance between two nodes */
-uint8_t GameEnv::roadBase(Node node1, Node node2) {
-	return (int) (euclideanDistance(node1, node2) + 0.5 );
-}
-
-/* Calculate Manhattan distance between two nodes */
-uint8_t GameEnv::manhattanDistance(Node node1, Node node2) {
-	__int8 deltaY = abs(node1.first - node2.first);
-	__int8 deltaX = abs(node1.second - node2.second);
-	return deltaY+deltaX;
-}
 
 /*-------------------------Private Interfaces--------------------------------*/
 void GameEnv::clearGameInfo(void){
