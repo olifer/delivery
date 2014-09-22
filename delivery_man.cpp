@@ -15,8 +15,6 @@ int main(int argc, _TCHAR* argv[])
 
 	GameEnv gameEnv(&client);
 	gameEnv.startGame();
-	// start timer
-	time_t start = time(NULL);
 
 	gameEnv.spreadOut();
 	gameEnv.updateGameInfo();
@@ -30,8 +28,8 @@ int main(int argc, _TCHAR* argv[])
 	//bool isCorrect = gameEnv.checkPath(make_pair(0,0),make_pair(20,20), &GameEnv::euclideanDistance);
 	
 	// ALGO DEBUG FACILITIES
-	/*while(gameEnv.getGameTime()<800){gameEnv.updateGameInfo();};
-	DebugInfo estimates = gameEnv.TestAlgorithm(algo::dijkstra);
+	//while(gameEnv.getGameTime()<800){gameEnv.updateGameInfo();};
+	/*DebugInfo estimates = gameEnv.TestAlgorithm(algo::dijkstra);
 	estimates = gameEnv.TestAlgorithm(algo::euclideanDistance);
 	estimates = gameEnv.TestAlgorithm(algo::manhattanDistance);
 	estimates = gameEnv.TestAlgorithm(algo::repulsiveCenter);*/

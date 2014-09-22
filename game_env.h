@@ -5,6 +5,17 @@
 #include "common.h"
 #include "edge.h"
 
+struct NodeRecord{
+	NodeRecord(){};
+	NodeRecord(Node node, Location fromEdge, int cost):node(node),expectedTotalCost(cost),fromEdge(fromEdge){};
+	Node node;
+	Location fromEdge; // edge that led to the node
+	int expectedTotalCost; // f(n) = g(n) + h(n)
+};
+/* Overload < of NodeEntry for usage in priority queue*/
+inline bool operator> (const NodeRecord& node1, const NodeRecord& node2){
+	return node1.expectedTotalCost > node2.expectedTotalCost;
+}
 /*---------------------------------------------------------------------------*/
 struct ActiveTasks {
 	std::unordered_map<int, int> vans; // <van number, delivery number>
@@ -32,6 +43,7 @@ class GameEnv {
 	// ponter to heuristic function
 	typedef uint8_t (GameEnv::*h_func)(Node node1, Node node2);
     static const int _spread_out_distance = 15;
+
 	std::vector<Node> _anchors;
 	DM_Client *_client;
 	GameNodesTypes _gameNodesTypes;
@@ -42,6 +54,7 @@ class GameEnv {
 	ActiveTasks _activeTasks;
 	// for DEBUG
 	int cost;
+	int maxCost;
 public:
 	
 	GameEnv(DM_Client *client){ 
@@ -50,6 +63,7 @@ public:
 		Node arr[] = {std::make_pair(20,10),std::make_pair(30,20),
 			std::make_pair(20,30),std::make_pair(10,20),std::make_pair(20,20)};
 		_anchors.assign(arr,arr+5);
+		maxCost = 0;
 	}
 	~GameEnv(void);
 	int getGameTime(void){return _gameInfo.time;}
@@ -68,6 +82,7 @@ public:
 	uint8_t euclideanDistance(Node node1, Node node2);
 	uint8_t roadBase(Node node1, Node node2);
 	uint8_t manhattanDistance(Node node1, Node node2);
+	uint8_t manhattanDistanceWeighted(Node node1, Node node2);
 	uint8_t dijkstra(Node node1, Node node2);
 	bool checkPath(Node start, Node end, h_func heuristic);
 	void manageDeliveries(void);
@@ -96,6 +111,7 @@ private:
 	bool isAnchor(Node node);
 	void addDefferedDelivery(int deliveryNum, int vanNum);
 	uint8_t GameEnv::repulsiveCenter(Node node1, Node node2);
+	Path findRoadOptimized(Node start, Node goal, h_func heuristic);
 };
 //Node arr[] = {std::make_pair(20,10),std::make_pair(30,20),std::make_pair(20,30),std::make_pair(10,20)};
 //std::vector<int> TestVector(arr, arr+5);

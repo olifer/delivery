@@ -21,10 +21,17 @@ uint8_t GameEnv::roadBase(Node node1, Node node2) {
 }
 
 /* Calculate Manhattan distance between two nodes */
+uint8_t GameEnv::manhattanDistanceWeighted(Node node1, Node node2) {
+	__int8 deltaY = abs(node1.first - node2.first);
+	__int8 deltaX = abs(node1.second - node2.second);
+	return 3*(deltaY+deltaX);
+}
+
+/* Calculate Manhattan distance between two nodes */
 uint8_t GameEnv::manhattanDistance(Node node1, Node node2) {
 	__int8 deltaY = abs(node1.first - node2.first);
 	__int8 deltaX = abs(node1.second - node2.second);
-	return deltaY+deltaX;
+	return (deltaY+deltaX);
 }
 
 /* Calculate Manhattan distance between two nodes */
@@ -35,7 +42,8 @@ uint8_t GameEnv::dijkstra(Node node1, Node node2) {
 // USE HEURISTIC HERE
 Path GameEnv::findPath(Node start, Node end){
 	// manhattanDistance repulsiveCenter euclideanDistance dijkstra
-	return findRoad(start, end, &GameEnv::repulsiveCenter); //
+	//return findRoad(start, end, &GameEnv::repulsiveCenter); 
+	return findRoadOptimized(start, end, &GameEnv::dijkstra);
 }
 
 Path GameEnv::findPathDebug(Node start, Node end, int h_func){
@@ -43,13 +51,15 @@ Path GameEnv::findPathDebug(Node start, Node end, int h_func){
 	
 	switch(h_func){
 		case algo::dijkstra: 
-			return findRoad(start, end, &GameEnv::dijkstra);
+			return findRoadOptimized(start, end, &GameEnv::dijkstra);
 		case algo::euclideanDistance: 
-			return findRoad(start, end, &GameEnv::euclideanDistance);
+			return findRoadOptimized(start, end, &GameEnv::euclideanDistance);
 		case algo::manhattanDistance: 
-			return findRoad(start, end, &GameEnv::manhattanDistance);
+			return findRoadOptimized(start, end, &GameEnv::manhattanDistance);
 		case algo::repulsiveCenter: 
-			return findRoad(start, end, &GameEnv::repulsiveCenter);
+			return findRoadOptimized(start, end, &GameEnv::repulsiveCenter);
+		default: 
+			return findRoadOptimized(start, end, &GameEnv::dijkstra);
 	}
 }
 /*----------------------------Interfaces-------------------------------------*/
@@ -123,17 +133,20 @@ void GameEnv::manageDeliveries(void){
 				removeTask(deliveryNum, vanNumber);
 				//dropoffLoc = 
 			} else { // accidental pickup
-				// conflict delivery
+				// remove current delivery task
+				removeTask(deliveryNum, vanNumber);
+				addDefferedDelivery(deliveryNum, vanNumber);
+				sendInstructionsToVan(vanNumber, vector<Location>());
+				// check for conflicts with another van
 				deliveryNum = _gameInfo.vans[i].cargo;//_activeTasks.pickup2del[vanLoc];
 				if(_activeTasks.deliveries.count(deliveryNum)) {
 					uint8_t conflictVan = 
 						_activeTasks.deliveries[deliveryNum]; 
 					// clean instructions of the conflict van
 					sendInstructionsToVan(conflictVan, vector<Location>());
-					sendInstructionsToVan(vanNumber, vector<Location>());
 					removeTask(deliveryNum, conflictVan);
 				}
-				addDefferedDelivery(deliveryNum, vanNumber);
+				
 				return;
 			}
 
@@ -245,9 +258,11 @@ void GameEnv::manageDefferedDeliveries(void){
 			deliveryNum = it->second;
 			numList.push_back(vanNum);
 			Location dropoffLoc = getDropOff(deliveryNum);
-			Path road = findPath(_gameInfo.vans[vanNum].location, 
-				dropoffLoc); 
-			sendInstructionsToVan(vanNum, road);
+			if(scheduleDeliveryTask(deliveryNum, vanNum)){
+				Path road = findPath(_gameInfo.vans[vanNum].location, 
+					dropoffLoc); 
+				sendInstructionsToVan(vanNum, road);
+			}
 			
 			i++;
 		}
@@ -439,6 +454,69 @@ vector<Edge> GameEnv::getOutgoingEdges(Node fromNode){
 	}
 	return edges;
 }
+/* Optimization of the searching A* algorithm */
+Path GameEnv::findRoadOptimized(Node start, Node goal, h_func heuristic){
+	// the tree of visited edges
+	unordered_map<Location, Location, hash_pair> road;
+	// g(n) - computed cost
+	unordered_map<Node, int, hash_pair> g_func;
+	// frontier
+	priority_queue<NodeRecord, vector<NodeRecord>, greater<NodeRecord>> open; 
+	// store actual data
+	NodeRecord currentNodeRecord;
+	Location currentNode, nextNode;
+	int currentCost, f_func;
+
+	road[Location(-1,-1)] = Location(-1,-1);
+	g_func[start] = 0;//NodeEntry newEntry = NodeEntry();
+	open.push(NodeRecord(start,Location(-1,-1),g_func[start]));
+
+	while(!open.empty()){
+		// Pick the cheapest node in open set
+		currentNodeRecord = open.top();
+		open.pop(); 
+		
+		currentNode = currentNodeRecord.node;
+
+		// Goal check
+		if(currentNode == goal) { 
+			break;
+		}
+
+		// Get possible edges
+		vector<Edge> edges = getOutgoingEdges(currentNode);
+		for(Edge::edge_itr e = edges.begin(); e != edges.end(); e++){
+			nextNode = e->getNextNode(currentNode);
+			currentCost = g_func[currentNode] + e->getCost();
+			if(currentCost>211){maxCost =currentCost; continue;}
+			// 1. cost for next node is not computed(not visited node) OR
+			// 2. currentCost is better than already computed
+			if(!g_func.count(nextNode) || g_func[nextNode] > currentCost){
+				f_func = currentCost + (this->*heuristic)(nextNode, goal); 
+				g_func[nextNode] = currentCost;
+				road[e->getLocation()] = currentNodeRecord.fromEdge;
+				open.push(NodeRecord(nextNode,e->getLocation(),f_func));
+			}
+		}
+	}
+
+	Path pathToGoal;
+	pathToGoal.reserve(G_MATRIX_LENGTH*3);
+	Location currentEdge = currentNodeRecord.fromEdge; 
+	// Make path
+	while(currentEdge.first>=0){
+		pathToGoal.push_back(currentEdge);
+		currentEdge = road[currentEdge];
+	}
+
+	reverse(pathToGoal.begin(),pathToGoal.end());
+
+	this->cost = g_func[currentNode];
+	if(cost>maxCost){
+		maxCost = cost;
+	}
+	return pathToGoal;
+}
 
 Path GameEnv::findRoad(Node start, Node goal, h_func heuristic){
 		vector<Edge> edges;
@@ -474,7 +552,6 @@ Path GameEnv::findRoad(Node start, Node goal, h_func heuristic){
 			// Pick the cheapest node in open set
 			entry = open.top();
 			open.pop(); 
-
 
 			// Goal check
 			if(entry.node == goal) { 
@@ -594,7 +671,7 @@ DebugInfo GameEnv::TestAlgorithm(int h_func) {
 bool GameEnv::checkPath(Node start, Node end, h_func heuristic) {
 		bool isCorrect = true;
 		// Get the path.
-		Path path = findRoad(start, end, heuristic);
+		Path path = findRoadOptimized(start, end, heuristic);
 
 		for(Path::iterator edge = path.begin(); edge != path.end(); ++edge) {
 			// get location of next edge in the matrix.
