@@ -75,7 +75,7 @@ typedef std::vector<NodeEntry> NodeEntryList;
 
 struct hash_pair {
     template <typename T, typename U>
-    std::size_t operator ()(std::pair<T, U> const& p) const {
+    inline std::size_t operator ()(std::pair<T, U> const& p) const {
         using std::hash;
         return hash<T>()(p.first) ^ hash<T>()(p.second);
     }
@@ -83,7 +83,7 @@ struct hash_pair {
 
 struct hash_pair_reverse {
     template <typename T, typename U>
-    std::size_t operator ()(std::pair<T, U> const& p) const {
+    inline std::size_t operator ()(std::pair<T, U> const& p) const {
         using std::hash;
         return hash<T>()(p.first) ^ hash<T>()(p.second);
     }

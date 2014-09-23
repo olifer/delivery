@@ -84,6 +84,10 @@ public:
 	uint8_t manhattanDistance(Node node1, Node node2);
 	uint8_t manhattanDistanceWeighted(Node node1, Node node2);
 	uint8_t dijkstra(Node node1, Node node2);
+	uint8_t repulsiveCenter(Node node1, Node node2);
+	uint8_t recursiveCost(Node start, Node goal);
+	uint8_t GameEnv::inspect(Node start, Node goal, uint8_t limit);
+
 	bool checkPath(Node start, Node end, h_func heuristic);
 	void manageDeliveries(void);
 	void spreadOutFreeVans(void);
@@ -110,7 +114,6 @@ private:
 	Node findNearestAnchor(Node node);
 	bool isAnchor(Node node);
 	void addDefferedDelivery(int deliveryNum, int vanNum);
-	uint8_t GameEnv::repulsiveCenter(Node node1, Node node2);
 	Path findRoadOptimized(Node start, Node goal, h_func heuristic);
 };
 //Node arr[] = {std::make_pair(20,10),std::make_pair(30,20),std::make_pair(20,30),std::make_pair(10,20)};

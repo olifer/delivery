@@ -5,37 +5,76 @@ using namespace std;
 using namespace Concurrency;
 
 /* Calculate idean distance between two nodes */
-uint8_t GameEnv::euclideanDistance(Node node1, Node node2) {
+inline uint8_t GameEnv::euclideanDistance(Node node1, Node node2) {
 	__int8 deltaY = node1.first - node2.first;
 	__int8 deltaX = node1.second - node2.second;
 	return (int) (sqrt(pow(deltaY,2.0)+pow(deltaX,2.0)) + 0.5 );
 }
 
-uint8_t GameEnv::repulsiveCenter(Node node1, Node node2) {
+/* Heuristic which tries to avoid the center of the map. */
+inline uint8_t GameEnv::repulsiveCenter(Node node1, Node node2) {
 	uint8_t centerCost = std::max((uint8_t) 100, manhattanDistance(node1, make_pair(20,20)));
 	return (manhattanDistance(node1, node2) + (1 / centerCost));
 }
+
 /* Calculate idean distance between two nodes */
-uint8_t GameEnv::roadBase(Node node1, Node node2) {
+inline uint8_t GameEnv::roadBase(Node node1, Node node2) {
 	return (int) (euclideanDistance(node1, node2) + 0.5 );
 }
 
-/* Calculate Manhattan distance between two nodes */
-uint8_t GameEnv::manhattanDistanceWeighted(Node node1, Node node2) {
-	__int8 deltaY = abs(node1.first - node2.first);
-	__int8 deltaX = abs(node1.second - node2.second);
-	return 3*(deltaY+deltaX);
+inline uint8_t GameEnv::recursiveCost(Node start, Node goal) {
+	return (inspect(start, goal, 4) + manhattanDistance(start, goal));
+}
+
+uint8_t GameEnv::inspect(Node start, Node goal, uint8_t limit) {
+	/* Find neighbours */
+	if(limit == 0) { return 0; }
+	vector<Edge> edges = getOutgoingEdges(start);
+	vector<Node> nodes;
+	for(vector<Edge>::iterator edge = edges.begin(); edge != edges.end(); ++edge) {
+		Node next = edge->getNextNode(start);
+		if(next == goal) { return 1; } // if the goal is one of my neighbours return 1.
+		nodes.push_back(edge->getNextNode(start));
+	}
+
+	/* Now compute heuristic for all neighbours and keep the index of best node */
+	vector<uint8_t> costs;
+	costs.reserve(nodes.size());
+	uint8_t bestCostIndex = 0;
+	uint8_t min = INT_MAX;
+	for(int i = 0; i < nodes.size(); ++i) {
+		costs.push_back(GameEnv::manhattanDistance(nodes.at(i), goal));
+		if(costs[i] < min) {
+			min = costs[i];
+			bestCostIndex = i;
+		}
+	}
+
+	Edge edge = edges.at(bestCostIndex);
+	//edges.clear();
+	Node next = nodes.at(bestCostIndex);
+	//nodes.clear();
+	//costs.clear();
+	/* Expand the best node */
+	return (edge.getCost() + inspect(next, goal, limit - 1));
 }
 
 /* Calculate Manhattan distance between two nodes */
-uint8_t GameEnv::manhattanDistance(Node node1, Node node2) {
+inline uint8_t GameEnv::manhattanDistanceWeighted(Node node1, Node node2) {
+	__int8 deltaY = abs(node1.first - node2.first);
+	__int8 deltaX = abs(node1.second - node2.second);
+	return 2*(deltaY+deltaX);
+}
+
+/* Calculate Manhattan distance between two nodes */
+inline uint8_t GameEnv::manhattanDistance(Node node1, Node node2) {
 	__int8 deltaY = abs(node1.first - node2.first);
 	__int8 deltaX = abs(node1.second - node2.second);
 	return (deltaY+deltaX);
 }
 
-/* Calculate Manhattan distance between two nodes */
-uint8_t GameEnv::dijkstra(Node node1, Node node2) {
+/* Worst heuristic */
+inline uint8_t GameEnv::dijkstra(Node node1, Node node2) {
 	return 0;
 }
 
@@ -43,7 +82,7 @@ uint8_t GameEnv::dijkstra(Node node1, Node node2) {
 Path GameEnv::findPath(Node start, Node end){
 	// manhattanDistance repulsiveCenter euclideanDistance dijkstra
 	//return findRoad(start, end, &GameEnv::repulsiveCenter); 
-	return findRoadOptimized(start, end, &GameEnv::dijkstra);
+	return findRoadOptimized(start, end, &GameEnv::manhattanDistanceWeighted);
 }
 
 Path GameEnv::findPathDebug(Node start, Node end, int h_func){
@@ -488,7 +527,7 @@ Path GameEnv::findRoadOptimized(Node start, Node goal, h_func heuristic){
 		for(Edge::edge_itr e = edges.begin(); e != edges.end(); e++){
 			nextNode = e->getNextNode(currentNode);
 			currentCost = g_func[currentNode] + e->getCost();
-			if(currentCost>211){maxCost =currentCost; continue;}
+			if(currentCost>211){maxCost = currentCost; continue;}
 			// 1. cost for next node is not computed(not visited node) OR
 			// 2. currentCost is better than already computed
 			if(!g_func.count(nextNode) || g_func[nextNode] > currentCost){
