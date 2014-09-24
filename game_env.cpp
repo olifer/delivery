@@ -13,8 +13,9 @@ inline uint8_t GameEnv::euclideanDistance(Node node1, Node node2) {
 
 /* Heuristic which tries to avoid the center of the map. */
 inline uint8_t GameEnv::repulsiveCenter(Node node1, Node node2) {
-	uint8_t centerCost = std::max((uint8_t) 100, manhattanDistance(node1, make_pair(20,20)));
-	return (manhattanDistance(node1, node2) + (1 / centerCost));
+	// Cost of going away from center.
+	uint8_t centerCost = manhattanDistance(node1, make_pair(20,20));
+	return (manhattanDistance(node1, node2) + (1 / (std::max(centerCost, (uint8_t) 1))) );
 }
 
 /* Calculate idean distance between two nodes */
@@ -63,7 +64,7 @@ uint8_t GameEnv::inspect(Node start, Node goal, uint8_t limit) {
 inline uint8_t GameEnv::manhattanDistanceWeighted(Node node1, Node node2) {
 	__int8 deltaY = abs(node1.first - node2.first);
 	__int8 deltaX = abs(node1.second - node2.second);
-	return 2*(deltaY+deltaX);
+	return (deltaY+(2*deltaX));
 }
 
 /* Calculate Manhattan distance between two nodes */
@@ -82,7 +83,7 @@ inline uint8_t GameEnv::dijkstra(Node node1, Node node2) {
 Path GameEnv::findPath(Node start, Node end){
 	// manhattanDistance repulsiveCenter euclideanDistance dijkstra
 	//return findRoad(start, end, &GameEnv::repulsiveCenter); 
-	return findRoadOptimized(start, end, &GameEnv::manhattanDistanceWeighted);
+	return findRoadOptimized(start, end, &GameEnv::manhattanDistance);
 }
 
 Path GameEnv::findPathDebug(Node start, Node end, int h_func){
@@ -500,7 +501,7 @@ Path GameEnv::findRoadOptimized(Node start, Node goal, h_func heuristic){
 	// g(n) - computed cost
 	unordered_map<Node, int, hash_pair> g_func;
 	// frontier
-	priority_queue<NodeRecord, vector<NodeRecord>, greater<NodeRecord>> open; 
+	priority_queue<NodeRecord, vector<NodeRecord>, greater_equal<NodeRecord>> open; 
 	// store actual data
 	NodeRecord currentNodeRecord;
 	Location currentNode, nextNode;

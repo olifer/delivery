@@ -16,6 +16,10 @@ struct NodeRecord{
 inline bool operator> (const NodeRecord& node1, const NodeRecord& node2){
 	return node1.expectedTotalCost > node2.expectedTotalCost;
 }
+/* Greater than returns true when a = b which puts a before b in the queue: LIFO */
+inline bool operator>= (const NodeRecord& node1, const NodeRecord& node2){
+	return node1.expectedTotalCost >= node2.expectedTotalCost;
+}
 /*---------------------------------------------------------------------------*/
 struct ActiveTasks {
 	std::unordered_map<int, int> vans; // <van number, delivery number>
