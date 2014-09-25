@@ -1,9 +1,20 @@
 #ifndef GAME_ENV_H
 #define GAME_ENV_H
 
+// warning C4482: nonstandard extension used: enum 'ALGO' used in qualified name 
+#pragma warning(disable : 4482) 
+
 #include <unordered_map>
 #include "common.h"
 #include "edge.h"
+
+/* Types of heuristic function. */
+enum ALGO { 
+	DIJKSTRA=1, 
+	EUCLIDEAN_DISTANCE, 
+	MANHATTAN_DISTANCE, 
+	REPULSIVE_CENTER
+};
 
 struct NodeRecord{
 	NodeRecord(){};
@@ -16,21 +27,27 @@ struct NodeRecord{
 inline bool operator> (const NodeRecord& node1, const NodeRecord& node2){
 	return node1.expectedTotalCost > node2.expectedTotalCost;
 }
+inline bool operator>= (const NodeRecord& node1, const NodeRecord& node2){
+	return node1.expectedTotalCost >= node2.expectedTotalCost;
+}
 /*---------------------------------------------------------------------------*/
+// Schedule information
 struct ActiveTasks {
+	// Relevant for pick-up deliveries only
 	std::unordered_map<int, int> vans; // <van number, delivery number>
 	std::unordered_map<int, int> deliveries; // <delivery number, van number>
 	// <location, delivery number>
 	std::unordered_map<Location, int, hash_pair> pickup2del; 
 	// <delivery number location>
 	std::unordered_map<int, Location> del2pickup;
+
+	// Relevant for drop-off deliveries only
 	// <delivery number van number>
 	std::unordered_map<int, int> deferredDeliveries;
 	std::unordered_map<int, int> deferredVans;
 };
 
-
-enum algo {dijkstra=1, euclideanDistance, manhattanDistance, repulsiveCenter};
+// For DEBUG purporses
 struct DebugInfo{
 	double quality;
 	double elapsed_secs;
@@ -42,8 +59,7 @@ struct DebugInfo{
 class GameEnv {
 	// ponter to heuristic function
 	typedef uint8_t (GameEnv::*h_func)(Node node1, Node node2);
-    static const int _spread_out_distance = 15;
-
+    static const int _spread_out_distance = 10;
 	std::vector<Node> _anchors;
 	DM_Client *_client;
 	GameNodesTypes _gameNodesTypes;
@@ -56,7 +72,6 @@ class GameEnv {
 	int cost;
 	int maxCost;
 public:
-	
 	GameEnv(DM_Client *client){ 
 		_client = client; 
 		_activeTasks = ActiveTasks(); 
@@ -66,55 +81,82 @@ public:
 		maxCost = 0;
 	}
 	~GameEnv(void);
-	int getGameTime(void){return _gameInfo.time;}
+
+	int getGameTime(void){ return _gameInfo.time; }
+
 	bool isTimeElapsed () { 
 		return (_gameInfo.time >= G_END_TIME 
 			|| _gameInfo.completedDeliveries.size()==TOTAL_DELIVERIES); 
 	}
-	void spreadOut(void);
-	void updateGameInfo(void);
+
 	void startGame(void);
-	void sendInstructions(InstructionsSet instuctions);
-	// assign a delivery to vans.
-	void assignDeliveries(void /*probably something here*/); 
-	void computeInstructions(void /*same thing here*/); // A* algorithm 
-	void checkForAccidents(void);
+
+	// VAN CONTROL
+	void spreadOut(void);
+
+	// GAME ROUTINE
+	void updateGameInfo(void);
+	
+	// DELIVERY MANAGEMENT
+	void assignDeliveriesParallel(void);
+	// Drop-off routines
+	void manageDeliveries(void);
+	void manageDefferedDeliveries(void);
+
+	// HEURISTICS
 	uint8_t euclideanDistance(Node node1, Node node2);
 	uint8_t roadBase(Node node1, Node node2);
 	uint8_t manhattanDistance(Node node1, Node node2);
 	uint8_t manhattanDistanceWeighted(Node node1, Node node2);
+	uint8_t repulsiveCenter(Node node1, Node node2);
 	uint8_t dijkstra(Node node1, Node node2);
+
+	// DEBUG FUNCTIONALITY
 	bool checkPath(Node start, Node end, h_func heuristic);
-	void manageDeliveries(void);
-	void spreadOutFreeVans(void);
-	void manageDefferedDeliveries(void);
+	
+	// PATH FINDING
 	void precomputeRoadTypes(void);
-	void assignDeliveriesParallel(void);
+
+	// DEBUG FUNCTIONALITY
 	DebugInfo TestAlgorithm(int h_func);
 private:
-	void clearGameInfo(void); 
-	VanInfo* getFreeVanNumber(Node goal); 
+	// OPERATIONAL INFORMATION
+	DeliveryInfo* getDeliveryInfo(int& deliveryNum);
 	DeliveryInfo* getAvailableDelivery(void);
-	bool scheduleDeliveryTask(__int8 deliveryNum, __int8 vanNum);
-	void removeTaskByDelivery(__int8 deliveryNum);
-	void removeTaskByVan(__int8 vanNum);
-	void removeTask(__int8 deliveryNum, __int8 vanNum);
-	bool isAdjacent(Location edge1, Location edge2);
+	VanInfo* getFreeNearestVan(Node& pickup);
+	bool isDeliveryAssignedForPickUp(int& deliveryNum);
+	bool isFreeVan(int& vanNum);
+	bool hasVanPickedUpDelivery(int& vanNum);
+
+	// VAN CONTROL
+	void sendInstructions(InstructionsSet& instuctions);
+	void sendInstructionsToVan(int& van, Path& instructions);
+	void sendVanTo(int& vanNumber, Location& location);
+
+	// TASKS MANAGEMENT
+	bool schedulePickUpTask(DeliveryInfo& delivery, int& vanNum);
+	void removePickUpTask(int& deliveryNum, int& vanNum);
+	void addDefferedDropOffTask(int& deliveryNum, int& vanNum);
+	void removeDefferedDropOffTask(int& deliveryNum, int& vanNum);
+	
+	// PATH FINDING
+	Path findPath(Node& start, Node& end);
+	Path findRoadOptimized(Node& start, Node& goal, h_func heuristic);
 	std::vector<Edge> getOutgoingEdges(Node fromNode);
-	Path findRoad(Node start, Node end, h_func heuristic);
-	Path findRoadOptimal(Node start, Node end, h_func heuristic);
-	Path findPath(Node start, Node end);
+
+	// DELIVERY MANAGEMENT
+	void SolveConflict(int& schdDeliveryNum, int& vanNum, int& actualDeliveryNum);
+	
+	// GAME ROUTINE
+	void clearGameInfo(void); 
+	
+	// DEBUG FUNCTIONALITY
+	bool isAdjacent(Location edge1, Location edge2);
 	Path findPathDebug(Node start, Node end, int h_func);
-	void sendInstructionsToVan(uint8_t van, Path instructions);
-	Node getDropOff(uint8_t deliveryNum);
-	Node findNearestAnchor(Node node);
-	bool isAnchor(Node node);
-	void addDefferedDelivery(int deliveryNum, int vanNum);
-	uint8_t GameEnv::repulsiveCenter(Node node1, Node node2);
-	Path findRoadOptimized(Node start, Node goal, h_func heuristic);
+
+	// TEMP
+	// old version of path finding algorithm
+	Path findRoad(Node start, Node end, h_func heuristic);
 };
-//Node arr[] = {std::make_pair(20,10),std::make_pair(30,20),std::make_pair(20,30),std::make_pair(10,20)};
-//std::vector<int> TestVector(arr, arr+5);
-//const std::vector<Node> GameEnv::_anchors(arr,arr+5);
 
 #endif

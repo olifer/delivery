@@ -2,7 +2,9 @@
 //
 
 #include "game_env.h"
- #include <Windows.h>
+#include <Windows.h>
+#include <time.h>
+#include <stdlib.h>
 using namespace std;
 
 
@@ -10,15 +12,24 @@ int main(int argc, _TCHAR* argv[])
 {
 	wstring group(L"3");
 	bool status;
+
+	//srand (time(NULL));
+
 	// DM_Client from DLL (closed source).
 	DM_Client client = DM_Client(group, status);
 
 	GameEnv gameEnv(&client);
-	gameEnv.startGame();
+	
+	try{
+		gameEnv.startGame();
 
-	gameEnv.spreadOut();
-	gameEnv.updateGameInfo();
-	gameEnv.precomputeRoadTypes();
+		gameEnv.spreadOut();
+		gameEnv.updateGameInfo();
+		gameEnv.precomputeRoadTypes();
+	} catch(const std::runtime_error& e){
+		e;
+		return -1;
+	}
 	/*vector<Edge> edges;
 	edges.reserve(4);    
 	edges = gameEnv.getOutgoingEdges(make_pair(20,20));
