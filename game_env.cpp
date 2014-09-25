@@ -109,7 +109,7 @@ void GameEnv::assignDeliveriesParallel(void){
 			int vanNumber = assignments[i].first;
 			sendVanTo(assignments[i].first, assignments[i].second.pickUp);
 		});
-	} else if(count == 0){
+	} else if(count == 1){
 		sendVanTo(assignments[0].first, assignments[0].second.pickUp);
 	}
 }
@@ -204,7 +204,7 @@ Path GameEnv::findRoadOptimized(Node& start, Node& goal, h_func heuristic){
 	// g(n) - computed cost
 	unordered_map<Node, int, hash_pair> g_func, h_func;
 	// frontier
-	priority_queue<NodeRecord, vector<NodeRecord>, greater_equal<NodeRecord>> open; 
+	priority_queue<NodeRecord, vector<NodeRecord>, greater<NodeRecord>> open; 
 	// store actual data
 	NodeRecord currentNodeRecord;
 	Location currentNode, nextNode;
